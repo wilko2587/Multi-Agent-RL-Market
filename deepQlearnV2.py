@@ -7,6 +7,10 @@ from collections import deque
 import random
 import os
 
+np.random.seed(1)
+torch.manual_seed(1)
+random.seed(1)
+
 class FFnet(nn.Module):
 
     def __init__(self, lr, input_dims, fc1_dims, fc2_dims, out_dims, activation = F.relu):
@@ -127,7 +131,7 @@ class SmartTrader:
             ministate, miniaction, mininext, minireward = minibatch[i]
             state[i] = ministate
             next_state[i] = mininext
-            action.append(self.act(state[i]))
+            action.append(miniaction)
             reward.append(minireward)
 
         target = np.zeros((self.batch_size, self.action_size))

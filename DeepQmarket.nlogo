@@ -1,17 +1,17 @@
 extensions [ py ]
 
-globals [ a returns p0 p1 price-history histogram-num-bars obs-length totalsmartbuy smartvolume dealervolume valuevolume bidofferpaid bestbids bestoffers start-price meandeviation ]
+globals [ a returns p0 p1 price-history histogram-num-bars obs-length bidofferpaid bestbids bestoffers start-price meandeviation ]
 
 breed [ valueinvestors valueinvestor ]
 breed [ smartinvestors smartinvestor ]
 breed [ dealers dealer ]
 breed [ priceindep-buyers priceindep-buyer ] ; retail buyer
 
-turtles-own [ expectation long short turn-taken? ]
+turtles-own [ expectation inventory ]
 links-own [ weight ]
 dealers-own [ bid offer last-trade ] ; bid and offer prices
 valueinvestors-own [ mynumber avgbuynum avgsellnum uncertainty ]
-smartinvestors-own [ last-state confident? trade-holding-times state-memory positions transaction-prices ctransaction-price recent-price-history actions_index ]
+smartinvestors-own [ confident? trade-holding-times state-memory positions transaction-prices ctransaction-price recent-price-history actions_index ]
 priceindep-buyers-own [ lefttobuy ]
 
 
@@ -19,7 +19,7 @@ to setup
 
   clear-all
 
-  ; random-seed 4
+  random-seed 4
 
   set obs-length 500 ; length of price history used to train the smart valueinvestors RL. Keep at 500.
   set a 0.01 ;0.2 * bid-offer / mm-PositionLimit ; constant determining how much bid-offer increases as size increases. Model parameter
@@ -27,79 +27,10 @@ to setup
   set bestbids []
   set bestoffers []
 
-  create-ordered-dealers nMarketMakers [
-    set shape "house"
-    set size 3
-    fd 5
-    rt 180
-    set color grey
-    set expectation 100
-    set bid expectation - bid-offer / 2
-    set offer expectation + bid-offer / 2
-    create-links-with other dealers [ set weight random 100 ]
-    set long 0
-    set short 0
-    set turn-taken? true
-    set last-trade 100 ; initialise at the starting price
-  ]
-
-  create-ordered-valueinvestors nValueInvestors [
-    set shape "person"
-    set size 2
-    fd 13
-    rt 180
-    set color blue
-    set uncertainty 10 + random 5
-    ifelse random 100 < 50 [
-      set expectation random-normal ( 100 - market-disparity ) ( uncertainty )
-    ][
-      set expectation random-normal ( 100 + market-disparity ) ( uncertainty )
-    ]
-    create-links-with dealers [ set weight random 100 ]
-    set long 0
-    set short 0
-    set turn-taken? false
-  ]
-
   setup-python
-
-  let model_built false
-  let counter 0
-  create-ordered-smartinvestors nSmartInvestors [
-    set shape "person"
-    set size 2
-    fd 16
-    rt 180
-    set color red
-    create-links-with dealers [ set weight random 100 ]
-    set long 0
-    set short 0
-    set state-memory []
-
-    py:set "params" []
-    py:set "id" who
-    py:set "lr" 1e-5
-    py:set "state_size" obs-length
-    py:set "eps_decay" 0.9995
-    py:set "gamma" 0.99
-    py:run "agents[id] = q.SmartTrader(lr, state_size, eps_decay=eps_decay, batch_size=64, gamma=gamma)"
-    set model_built true
-
-    set trade-holding-times []
-    set positions []
-    set transaction-prices []
-    set recent-price-history []
-    set actions_index []
-    set confident? false
-    set turn-taken? false
-
-    if AI-investor-model = "Pretrained" [
-      py:set "counter" counter
-      py:run "modelname = 'DeepQtrader{}.pt'.format(counter)"
-      py:run "agents[id].load_model(modelname)"
-      set counter counter + 1
-    ]
-  ]
+  initialise-dealers
+  initialise-valueinvestors
+  initialise-smartinvestors
 
   ask links [ ; three boundary criteria: a turtle cannot have less than one connection to another dealer
     if weight > prob-of-link and count ( [ link-neighbors with [ breed = dealers ] ] of end2  ) > 1 and count ( [ link-neighbors with [ breed = dealers ] ] of end1 ) > 1 [
@@ -127,49 +58,31 @@ end
 
 to go
 
-  if not any? turtles with [ turn-taken? = false ]  [ ; if we're at the end of a round (make sure every valueinvestorhas had a turn at transacting)
-    ask turtles [
-      if breed = valueinvestors or breed = smartinvestors [
-        set turn-taken? false
-      ]
-    ]
-  ]
-
-  ask one-of turtles with [ ( breed != dealers ) and ( turn-taken? = false ) ][
-    set turn-taken? true
+  ; 1) get an investor at random to act
+  ask one-of turtles [
     if breed = valueinvestors [
       investor-act
     ]
-
     if breed = smartinvestors [
       smartinvestor-act
     ]
-  ]
-
-  ask dealers [ refresh-bidoffer ]
-
-  let bestbid max [ bid ] of dealers
-  let bestoffer min [ offer ] of dealers
-  set bestbids lput bestbid bestbids
-  set bestoffers lput bestoffer bestoffers
-
-  if any? dealers with [ abs ( long - short ) > mm-PositionLimit ] [ ;
-    ask one-of dealers with [ abs ( long - short ) > mm-PositionLimit ] [
+    if ( breed = dealers ) and ( abs ( inventory ) > mm-PositionLimit ) and enable-broker-market [ ;
       dealer-act
-      ask dealers [ refresh-bidoffer ]
     ]
   ]
 
-  if ( ticks mod 50 ) = 0 and not any? smartinvestors with [ not confident? ] [;and not any? smartinvestors with [ not confident? ] [ ; record the price changes every 50 ticks
-    set p1 price-level
-    set returns lput (p1 - p0) returns
-    set p0 p1
-    if start-price = 0 [
-      set start-price mean [ expectation ] of dealers
-    ]
-  ]
+  ; 2) refresh prices
+  step
+  record-returns
+  update-graphics
+  update-pricehistory
 
-  ; update price history
+  tick
+
+end
+
+
+to update-pricehistory ; global
   set price-history lput mean [ expectation ] of dealers price-history
   ;set meandeviation lput ( mean [ expectation ] of dealers - mean [ expectation ] of valueinvestors ) meandeviation
   ask smartinvestors [
@@ -178,34 +91,87 @@ to go
       set recent-price-history remove-item 0 recent-price-history ; keep the recent price history a fixed length
     ]
   ]
-
-  ask links [
-    set thickness thickness / 1.02
-    set color color - 0.03
-    if thickness < 0.2 [
-      set color grey - 3
-      set thickness 0
-      set hidden? false
-    ]
-  ]
-
-  ask dealers [
-    if long - short > mm-PositionLimit [
-      set color green
-    ]
-    if short - long > mm-PositionLimit [
-      set color red
-    ]
-    if abs ( long - short ) < mm-PositionLimit [
-      set color grey + 3
-    ]
-  ]
-
-  tick
 end
 
 
-to smartinvestor-act
+to update-graphics ; global
+    ask links [
+      ifelse thickness < 0.2 [
+        set color grey - 3
+        set thickness 0
+        set hidden? false
+      ][
+        set thickness thickness / 1.02
+        set color color - 0.03
+      ]
+    ]
+    ask dealers [
+      if inventory > mm-PositionLimit [
+        set color green
+      ]
+      if inventory < -1 * mm-PositionLimit [
+        set color red
+      ]
+      if abs ( inventory ) < mm-PositionLimit [
+        set color grey + 3
+      ]
+    ]
+end
+
+
+to record-returns ; global
+    if ( ticks mod 50 ) = 0 and not any? smartinvestors with [ not confident? ] [ ; record the price changes every 50 ticks
+    set p1 price-level
+    set returns lput (p1 - p0) returns
+    set p0 p1
+    if start-price = 0 [
+      set start-price mean [ expectation ] of dealers
+    ]
+  ]
+end
+
+
+to step ; global
+  ask dealers [
+    refresh-bidoffer
+  ]
+
+  let bestbid max [ bid ] of dealers
+  let bestoffer min [ offer ] of dealers
+  set bestbids lput bestbid bestbids
+  set bestoffers lput bestoffer bestoffers
+end
+
+
+to refresh-bidoffer ; dealer procedure
+  let axe-adj min list bid-offer a * sensitivity-function ( -1 * inventory  )
+  set expectation last-trade + axe-adj
+
+  set offer ( expectation + bid-offer / 2 )
+  set bid ( expectation - bid-offer / 2 )
+end
+
+
+to dealer-act ; dealer procedure
+  let trade_size min list ( trade-size-cap ) ( abs ( inventory - mm-PositionLimit ) )
+  if inventory < 0 [
+    let bestdealer max-one-of link-neighbors with [ breed = dealers ] [ inventory ]
+    ;set trade_size min list ( trade_size ) ( [ inventory ] of bestdealer ) ; dealers will only trade to make themselves flatter
+    if trade_size > 0 [
+      transact "buy" trade_size [ who ] of bestdealer
+    ]
+  ]
+  if inventory > 0 [
+    let bestdealer min-one-of link-neighbors with [ breed = dealers ] [ inventory ]
+    ;set trade_size min list ( trade_size ) ( -1 * [ inventory ] of bestdealer ) ; dealers will only trade to make themselves flatter
+    if trade_size > 0 [
+      transact "sell" trade_size [ who ] of bestdealer
+    ]
+  ]
+end
+
+
+to smartinvestor-act ; smartinvestor procedure
 
   py:set "id" who
 
@@ -219,10 +185,12 @@ to smartinvestor-act
     let ptransaction-price ( item index transaction-prices )
     let _position ( item index positions )
     if _position > 0 [
-      smartinvestor-sell _position 0
+      let bestdealer [ who ] of min-one-of link-neighbors with [ breed = dealers ] [ inventory ]
+      transact "sell" _position bestdealer
     ]
     if _position < 0 [
-      smartinvestor-buy -1 * _position 0
+      let bestdealer [ who ] of max-one-of link-neighbors with [ breed = dealers ] [ inventory ]
+      transact "buy" -1 * _position bestdealer
     ]
 
     set bidofferpaid bidofferpaid + bid-offer
@@ -253,14 +221,15 @@ to smartinvestor-act
     set trade-holding-times lput ( ticks + trade_time ) trade-holding-times ; add a new counter to the list
     set actions_index lput action actions_index
 
-    ifelse buy_sell != "do nothing" [
-      if buy_sell = "sell" [
-        smartinvestor-sell trade_size trade_time
-      ]
-      if buy_sell = "buy" [
-        smartinvestor-buy trade_size trade_time
-      ]
-    ][
+    if buy_sell = "buy" [
+      let bestdealer [ who ] of max-one-of link-neighbors with [ breed = dealers ] [ inventory ]
+      transact "buy" trade_size bestdealer
+    ]
+    if buy_sell = "sell" [
+      let bestdealer [ who ] of min-one-of link-neighbors with [ breed = dealers ] [ inventory ]
+        transact "sell" trade_size bestdealer
+    ]
+    if buy_sell = "do nothing" [
       set transaction-prices lput 0 transaction-prices ; this is a "do nothing" transaction, reward will be zero so transaction_price doesn't matter
       set positions lput 0 positions
     ]
@@ -268,285 +237,159 @@ to smartinvestor-act
 end
 
 
-to refresh-bidoffer ; dealer procedure
-
-
-  let axe-adj min list bid-offer a * sensitivity-function ( short - long  )
-
-  set expectation last-trade + axe-adj
-
-  set offer ( expectation + bid-offer / 2 )
-  set bid ( expectation - bid-offer / 2 )
-
-end
-
-
-to dealer-act
-  if ( mm-limit-toggle and ( long - short > mm-PositionLimit ) ) [
-    dealersell
-  ]
-  if ( mm-limit-toggle and ( short - long > mm-PositionLimit ) ) [
-    dealerbuy
-  ]
-end
-
-
 to investor-act ;
 
-  ;; four types of action:
-  ;;  1) Get longer
-  ;;  2) Get shorter
+  let best_advertised_bid [ bid ] of max-one-of ( link-neighbors with [ breed = dealers ] ) [ bid ] ; best bid in the market
+  let best_advertised_offer [ offer ] of min-one-of ( link-neighbors with [ breed = dealers ] ) [ offer ] ; best offer in the market
 
-  let bestbid [ bid ] of max-one-of ( link-neighbors with [ breed = dealers ] ) [ bid ] ; best bid in the market
-  let bestoffer [ offer ] of min-one-of ( link-neighbors with [ breed = dealers ] ) [ offer ] ; best offer in the market
+  let gain-from-buy ( expectation - best_advertised_offer )
+  let gain-from-sell ( best_advertised_bid - expectation )
 
-  let gain-from-buy ( expectation - bestoffer )
-  let gain-from-sell ( bestbid - expectation )
-
-  ;; 1) Get shorter
-  if ( bestbid > expectation ) and ( gain-from-buy < gain-from-sell ) [ ; if the price is real, and higher than expectation, sell
-    valueInvestorSell
+  ;; 1) Sell
+  if ( best_advertised_bid > expectation ) and ( gain-from-buy < gain-from-sell ) [ ; if the price is real, and higher than expectation, sell
+    let bestdealer max-one-of link-neighbors with [ breed = dealers ] [ -1 * inventory ] ; naturally, this will select the dealer with most room
+    let bestbid [ bid ] of bestdealer
+    let tradesize max list ( 0 ) ( inventory ) ; if positioned wrong way, we want to close out the position AND put on a trade
+    ; if valueinvestoris not selling because of inventory limits, then act as normal. Else, trade to get within limits again
+    set tradesize min list ( trade-size-cap ) ( tradesize + ( bestbid - expectation ) / ( uncertainty + a / 2 ) )
+    transact "sell" tradesize [ who ] of bestdealer
   ]
 
-   ;; 2) Get longer
-  if ( bestoffer < expectation ) and ( gain-from-sell < gain-from-buy ) [ ; if the price is real, and lower than expectation, buy
-    valueInvestorBuy
+   ;; 2) Buy
+  if ( best_advertised_offer < expectation ) and ( gain-from-sell < gain-from-buy ) [ ; if the price is real, and lower than expectation, buy
+    let bestdealer max-one-of link-neighbors with [ breed = dealers ] [ inventory ] ; naturally, this will select the dealer with most room
+    let bestoffer [ offer ] of bestdealer
+    let tradesize max list ( 0 ) ( -1 * inventory ) ; if positioned wrong way, we want to close out the position AND put on a trade
+    set tradesize min list ( trade-size-cap ) ( tradesize + ( expectation - bestoffer ) / ( uncertainty + a / 2 ) )
+
+    transact "buy" tradesize [ who ] of bestdealer
   ]
 
 end
 
 
-to smartinvestor-sell [ tradesize trade_time ]
+to transact [ direction tradesize counterpartyID ]
 
-  let bestdealer max-one-of link-neighbors with [ breed = dealers ] [ short - long ] ; naturally, this will select the dealer with most room
-  let bestbid [ bid ] of bestdealer
-  let max-natural-size  max list ( 0 ) ( [ short - long + mm-PositionLimit ] of bestdealer ) ; amount of room the dealer can buy without breeching limits
+  let factor 1 ;initialise
+  ifelse direction = "buy" [ set factor -1 ][ set factor 1 ]
+  let counterparty one-of dealers with [ who = counterpartyID ]
+  let bestpx 0 ; initialise
+  ifelse direction = "sell" [
+    set bestpx [ bid ] of counterparty
+  ][
+    set bestpx [ offer ] of counterparty
+  ]
 
-  let excess-bid bestbid - a * ( tradesize - max-natural-size ) ; CHANGE
+  let max-natural-size  max list ( 0 ) ( [ mm-PositionLimit + factor * inventory ] of counterparty ) ; amount of room the dealer can transact without breeching limits
+
+  let excesspx bestpx - a * ( tradesize - max-natural-size ) ; The price the dealer will take the *excess* size above and beyond their limit
   let excess-size max list (0) ( tradesize - max-natural-size )
-  let size-adj-bid ( ( bestbid * min list tradesize max-natural-size ) + ( excess-bid * excess-size ) ) / tradesize ; weighted mean of prices
+  let size-adj-px ( ( bestpx * min list tradesize max-natural-size ) + ( excesspx * excess-size ) ) / tradesize ; weighted mean of the natural and excess prices
 
-  set short short + tradesize
-  ask dealers with [ in-link-neighbor? bestdealer ] [
-    set last-trade size-adj-bid
-  ]
-  ask bestdealer [
-    set last-trade size-adj-bid
+  if ( breed = smartinvestors ) [ ; NB: this would be nicer inside smartinvestor-act procedure, but it requires knowing size-adj-px so this is not an option.
+    ifelse length trade-holding-times > 0 and min trade-holding-times <= ticks [ ; if it was an old trade being closed, remove the trade stats from the traders memory
+      set ctransaction-price size-adj-px
+      ][ ; else create a new part in the memory
+      set positions lput ( -1 * factor * tradesize ) positions ; sell is negative position
+      set transaction-prices lput size-adj-px transaction-prices
+    ]
   ]
 
-  ifelse length trade-holding-times > 0 and min trade-holding-times <= ticks [ ; if it was an old trade being closed, remove the trade stats from the traders memory
-    set ctransaction-price size-adj-bid
-  ][ ; else create a new part in the memory
-    set positions lput ( -1 * tradesize ) positions ; sell is negative position
-    set transaction-prices lput size-adj-bid transaction-prices
+  set inventory inventory - factor * tradesize
+  ask dealers with [ in-link-neighbor? counterparty ] [
+    set last-trade size-adj-px
+  ]
+  ask counterparty [
+    set last-trade size-adj-px
+    set inventory inventory + factor * tradesize
   ]
 
   ; printing stats
-  if verbose [ print ( word breed  who "sells " tradesize " to dealer" [ who ] of bestdealer " @" size-adj-bid ) ]
+  if verbose [ print ( word breed  who direction " " tradesize " to dealer" [ who ] of counterparty " @" size-adj-px ) ]
 
-  ask bestdealer [ ; update the counterparty dealer's stats and refresh their bid offer
-    set long long + tradesize
-  ]
-
-  ask my-links with [ end1 = bestdealer ] [
+  ask my-links with [ end1 = counterparty ] [
     set thickness min list 2 tradesize * 0.2
     set hidden? false
+    ifelse direction = "sell" [
+      set color red
+    ][
+      set color green
+    ]
+  ]
+
+end
+
+
+to initialise-smartinvestors
+  let counter 0
+  create-ordered-smartinvestors nSmartInvestors [
+    set shape "person"
+    set size 2
+    fd 16
+    rt 180
     set color red
+    create-links-with dealers [ set weight random 100 ]
+    set inventory 0
+    set state-memory []
+
+    py:set "params" []
+    py:set "id" who
+    py:set "lr" 1e-5
+    py:set "state_size" obs-length
+    py:set "eps_decay" 0.99
+    py:set "gamma" 0.99
+    py:run "agents[id] = q.SmartTrader(lr, state_size, eps_decay=eps_decay, batch_size=32, gamma=gamma)"
+
+    set trade-holding-times []
+    set positions []
+    set transaction-prices []
+    set recent-price-history []
+    set actions_index []
+    set confident? false
+
+    if AI-investor-model = "Pretrained" [
+      py:set "counter" counter
+      py:run "modelname = 'DeepQtrader{}.pt'.format(counter)"
+      py:run "agents[id].load_model(modelname)"
+      set counter counter + 1
+    ]
   ]
-
-  set smartvolume smartvolume + tradesize
-
 end
 
 
-to smartinvestor-buy [ tradesize trade_time ]
-
-  let bestdealer max-one-of link-neighbors with [ breed = dealers ] [ long - short ] ; naturally, this will select the dealer with most room
-  let bestoffer [ offer ] of bestdealer
-  let max-natural-size  max list ( 0 ) ( [ long - short + mm-PositionLimit ] of bestdealer ) ; amount of room the dealer can buy without breeching limits
-
-  let excess-offer bestoffer + a * ( tradesize - max-natural-size )
-  let excess-size max list (0) ( tradesize - max-natural-size )
-  let size-adj-offer ( ( bestoffer * min list tradesize max-natural-size ) + ( excess-offer * excess-size ) ) / tradesize ; weighted mean of prices
-
-  set long long + tradesize
-  ask dealers with [ in-link-neighbor? bestdealer ] [
-    set last-trade size-adj-offer
+to initialise-valueinvestors
+  create-ordered-valueinvestors nValueInvestors [
+    set shape "person"
+    set size 2
+    fd 13
+    rt 180
+    set color blue
+    set uncertainty 10 + random 5
+    ifelse random 100 < 50 [
+      set expectation random-normal ( 100 - market-disparity ) ( uncertainty )
+    ][
+      set expectation random-normal ( 100 + market-disparity ) ( uncertainty )
+    ]
+    create-links-with dealers [ set weight random 100 ]
+    set inventory 0
   ]
-  ask bestdealer [
-    set last-trade size-adj-offer
-  ]
-
-  ifelse length trade-holding-times > 0 and min trade-holding-times <= ticks [ ; if it was an old trade being closed, remove the trade stats from the traders memory
-    let index position ( min trade-holding-times ) trade-holding-times
-    set ctransaction-price size-adj-offer
-  ][ ; else create a new part in the memory
-    set positions lput tradesize positions
-    set transaction-prices lput size-adj-offer transaction-prices
-  ]
-
-  ; printing stats
-  if verbose [ print ( word breed  who "buys " tradesize " from dealer" [ who ] of bestdealer " @" size-adj-offer ) ]
-
-  ask bestdealer [ ; update the counterparty dealer's stats and refresh their bid offer
-    set short short + tradesize
-  ]
-
-  ask my-links with [ end1 = bestdealer ] [
-    set thickness min list 2 tradesize * 0.2
-    set hidden? false
-    set color green
-  ]
-
-  set smartvolume smartvolume + tradesize
-
 end
 
 
-to dealerbuy ; valueinvestorprocedure
-  let bestdealer max-one-of link-neighbors with [ breed = dealers ] [ long - short ] ; naturally, this will select the dealer with most room
-  let bestoffer [ offer ] of bestdealer
-  let max-natural-size  max list ( 0 ) ( [ long - short + mm-PositionLimit ] of bestdealer ) ; amount of room the dealer can buy without breeching limits
-  let tradesize min list ( trade-size-cap ) ( short - long - mm-PositionLimit )
-  let excess-offer bestoffer + a * ( tradesize - max-natural-size)
-  let excess-size max list (0) ( tradesize - max-natural-size )
-  let size-adj-offer ( ( bestoffer * min list tradesize max-natural-size ) + ( excess-offer * excess-size ) ) / tradesize ; weighted mean of prices
-
-  set long long + tradesize
-  ask dealers with [ in-link-neighbor? bestdealer ] [
-    set last-trade size-adj-offer
+to initialise-dealers
+  create-ordered-dealers nMarketMakers [
+    set shape "house"
+    set size 3
+    fd 5
+    rt 180
+    set color grey
+    set expectation 100
+    set bid expectation - bid-offer / 2
+    set offer expectation + bid-offer / 2
+    create-links-with other dealers [ set weight random 100 ]
+    set inventory 0
+    set last-trade 100 ; initialise at the starting price
   ]
-  ask bestdealer [
-    set last-trade size-adj-offer
-  ]
-
-  ; printing stats
-  if verbose [ print ( word breed who "buys " tradesize " from dealer" [ who ] of bestdealer " @" size-adj-offer ) ]
-
-  ask bestdealer [ ; update the counterparty dealer's stats and refresh their bid offer
-    set short short + tradesize
-  ]
-
-  ask my-links with [ end1 = bestdealer ] [
-    set thickness min list 2 tradesize * 0.2
-    set hidden? false
-    set color green
-  ]
-
-  set dealervolume dealervolume + tradesize
-end
-
-
-to dealersell
-  let bestdealer max-one-of link-neighbors with [ breed = dealers ] [ short - long ] ; naturally, this will select the dealer with most room
-  let bestbid [ bid ] of bestdealer
-  let max-natural-size  max list ( 0 ) ( [ short - long + mm-PositionLimit ] of bestdealer ) ; amount of room the dealer can buy without breeching limits
-  let tradesize min list ( trade-size-cap ) ( long - short - mm-PositionLimit )
-  let excess-bid bestbid - a * ( tradesize - max-natural-size)
-  let excess-size max list (0) ( tradesize - max-natural-size )
-  let size-adj-bid ( ( bestbid * min list tradesize max-natural-size ) + ( excess-bid * excess-size ) ) / tradesize ; weighted mean of prices
-
-  set short short + tradesize
-  ask dealers with [ in-link-neighbor? bestdealer ] [
-    set last-trade size-adj-bid
-  ]
-  ask bestdealer [
-    set last-trade size-adj-bid
-  ]
-
-  ; printing stats
-  if verbose [ print ( word breed who "sells " tradesize " to dealer" [ who ] of bestdealer " @" size-adj-bid ) ]
-
-  ask bestdealer [ ; update the counterparty dealer's stats and refresh their bid offer
-    set long long + tradesize
-  ]
-
-  ask my-links with [ end1 = bestdealer ] [
-    set thickness min list 2 tradesize * 0.2
-    set hidden? false
-    set color red
-  ]
-
-  set dealervolume dealervolume + tradesize
-end
-
-
-to valueInvestorBuy ; valueinvestorprocedure
-
-  let bestdealer max-one-of link-neighbors with [ breed = dealers ] [ long - short ] ; naturally, this will select the dealer with most room
-  let bestoffer [ offer ] of bestdealer
-  let max-natural-size  max list ( 0 ) ( [ long - short + mm-PositionLimit ] of bestdealer ) ; amount of room the dealer can buy without breeching limits
-  let tradesize max list ( 0 ) ( short - long ) ; if positioned wrong way, we want to close out the position AND put on a trade
-
-  set tradesize min list ( trade-size-cap ) ( tradesize + ( expectation - bestoffer ) / ( uncertainty + a / 2 ) )
-
-  let excess-offer bestoffer + a * ( tradesize - max-natural-size )
-  let excess-size max list (0) ( tradesize - max-natural-size )
-  let size-adj-offer ( ( bestoffer * min list tradesize max-natural-size ) + ( excess-offer * excess-size ) ) / tradesize ; weighted mean of prices
-
-  set long long + tradesize
-  ask dealers with [ in-link-neighbor? bestdealer ] [
-    set last-trade size-adj-offer
-  ]
-  ask bestdealer [
-    set last-trade size-adj-offer
-  ]
-
-  ; printing stats
-  if verbose [ print ( word breed  who "buys " tradesize " from dealer" [ who ] of bestdealer " @" size-adj-offer " target" expectation) ]
-
-  ask bestdealer [ ; update the counterparty dealer's stats and refresh their bid offer
-    set short short + tradesize
-  ]
-
-  ask my-links with [ end1 = bestdealer ] [
-    set thickness min list 2 tradesize * 0.2
-    set hidden? false
-    set color green
-  ]
-
-  set valuevolume valuevolume + tradesize
-end
-
-
-to valueInvestorSell ; valueinvestorprocedure
-
-  let bestdealer max-one-of link-neighbors with [ breed = dealers ] [ short - long ] ; naturally, this will select the dealer with most room
-  let bestbid [ bid ] of bestdealer
-  let max-natural-size  max list ( 0 ) ( [ short - long + mm-PositionLimit ] of bestdealer ) ; amount of room the dealer can buy without breeching limits
-
-  let tradesize max list ( 0 ) ( long - short ) ; if positioned wrong way, we want to close out the position AND put on a trade
-
-  ; if valueinvestoris not selling because of inventory limits, then act as normal. Else, trade to get within limits again
-  set tradesize min list ( trade-size-cap ) ( tradesize + ( bestbid - expectation ) / ( uncertainty + a / 2 ) )
-
-  let excess-bid bestbid - a * ( tradesize - max-natural-size) ; price to take the extra at
-  let excess-size max list (0) ( tradesize - max-natural-size )
-  let size-adj-bid ( ( bestbid * min list tradesize max-natural-size ) + ( excess-bid * excess-size ) ) / tradesize ; weighted mean of prices
-
-  set short short + tradesize
-  ask dealers with [ in-link-neighbor? bestdealer ] [
-    set last-trade size-adj-bid
-  ]
-  ask bestdealer [
-    set last-trade size-adj-bid
-  ]
-
-  ; printing stats
-  if verbose [ print ( word breed  who "sells " tradesize " to dealer" [ who ] of bestdealer " @" size-adj-bid " target" expectation) ]
-
-  ask bestdealer [ ; update the counterparty dealer's stats and refresh their bid offer
-    set long long + tradesize
-  ]
-
-  ask my-links with [ end1 = bestdealer ] [
-    set thickness min list 2 tradesize * 0.2
-    set hidden? false
-    set color red
-  ]
-
-  set valuevolume valuevolume + tradesize
-
 end
 
 
@@ -562,42 +405,6 @@ to plot-normal [ histogram-bins ]
     [
       plotxy stepper (mult * exp ( - ((stepper - meanPlot) ^ 2) / (2 * varPlot) ) )
       set stepper stepper + 0.01
-    ]
-  ]
-end
-
-
-to-report smile [ x ] ; report standard dev of normal distribution fitting returns geq than x
-  let filt_returns []
-  ifelse x <= 0 [
-    set filt_returns filter [ i -> i <= x ] returns
-  ][
-    set filt_returns filter [ i -> i >= x ] returns
-  ]
-
-  ;let filt_returns filter [ i -> ( abs i ) >= ( abs x ) ] returns
-  let filt_returns_doublesided ( sentence ( filt_returns ) ( map [ i -> i * -1 ] filt_returns ) )
-  ifelse length filt_returns > 2 [
-    let var variance filt_returns_doublesided
-    report sqrt var
-  ][
-    report "None"
-  ]
-end
-
-to plot-smile
-  clear-plot
-
-  if length returns > 50 [
-    let xrange max list int ( min returns - 1 )  int ( max returns + 1 )
-    set-plot-x-range -1 * xrange xrange
-    let totalvar variance returns
-    let stepper plot-x-min
-    while [ stepper < plot-x-max ][
-      if smile stepper != "None" [
-        plotxy stepper ( smile stepper )
-      ]
-      set stepper stepper + 0.1
     ]
   ]
 end
@@ -622,7 +429,6 @@ to-report skew
   ]
 end
 
-
 to move-market ; valueinvestorprocedure
   ;setup-investors
   ask valueinvestors [
@@ -630,23 +436,11 @@ to move-market ; valueinvestorprocedure
   ]
 end
 
-
 to force-dealers-short ; when called, forces dealers to get limit-long
   ask dealers [
-    set short long + mm-PositionLimit * 1.5
+    set inventory -1 * mm-PositionLimit * 1.5
   ]
 end
-
-
-to introduce-price-indep-buyer ; introduce a new valueinvestortemporarily to the system, with a certain amount to buy regardless of the price
-  create-ordered-priceindep-buyers 1
-  ask priceindep-buyers [ ; This probably needs making more robust.
-    set color red
-    set lefttobuy 100
-    set size lefttobuy / 100 ; make big and we'll decrease its size as it sells. This makes a nice intuitive visualisation
-  ]
-end
-
 
 to kill-value-investors
   ask valueinvestors [
@@ -654,21 +448,17 @@ to kill-value-investors
   ]
 end
 
-
 to-report normal [x mu var]
   report 1 / sqrt ( 2 * pi * var ) * exp ( - ((x - mu) ^ 2) / (2 * var) )
 end
-
 
 to-report benchmark-level
   report sum [ mynumber ] of valueinvestors
 end
 
-
 to-report price-level
   report mean [ expectation ] of dealers
 end
-
 
 to-report best-bid
   let bestbid [ bid ] of max-one-of dealers [ bid ]
@@ -679,7 +469,6 @@ to-report best-bid
   ]
 end
 
-
 to-report best-offer
   let bestoffer [ offer ] of min-one-of dealers [ offer ]
   ifelse bestoffer < 1e10 [
@@ -688,7 +477,6 @@ to-report best-offer
     report "No Offer"
   ]
 end
-
 
 to-report rollingVol [ period return_period ]
   ;if length returns >= period [
@@ -707,8 +495,6 @@ to-report rollingVol [ period return_period ]
 
 end
 
-
-
 to save-model
   let counter 0
   ask smartinvestors [
@@ -720,33 +506,29 @@ to save-model
   ]
 end
 
-
 to-report sensitivity-function [ x ]
   report x ; linear
 end
-
 
 to-report smartinvestor-rewards
   let meanreward ( py:runresult "sum([agents[id].totalreward for id in agents.keys()])" ) / nSmartInvestors
   report meanreward
 end
 
-
 to-report smartinvestor-epsilon
   let epsilon py:runresult "sum([agents[id].epsilon for id in agents.keys()])" / nSmartInvestors
   report epsilon
 end
-
 
 to-report z-score [x _mean var ]; z scores x on normal distro with _mean and var
   report abs( x - _mean ) / sqrt ( var )
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
-922
-10
-1296
-385
+926
+14
+1300
+389
 -1
 -1
 11.1
@@ -778,7 +560,7 @@ nValueInvestors
 nValueInvestors
 0
 50
-50.0
+10.0
 1
 1
 NIL
@@ -871,7 +653,7 @@ price
 10.0
 true
 true
-"set-plot-y-range 99 101" "set-plot-x-range ( max list ( 0 ) ( ticks - 2000 ) ) ticks + 10"
+"set-plot-y-range 99 101" "set-plot-x-range ( max list ( 0 ) ( ticks - 2000 ) ) ticks + 10\nif length price-history > 2000 [\nlet last2000 sublist price-history ( length price-history - 2000 ) ( length price-history )\nlet ymax max last2000\nlet ymin min last2000\nset-plot-y-range ( precision ymin 2 ) ( precision ymax 2 )\n]"
 PENS
 "market bid" 1.0 0 -13345367 true "" "let bestbid [ bid ] of max-one-of dealers [ bid ]\nlet bestoffer [ offer ] of min-one-of dealers [ offer ]\nifelse bestbid = -1e11 [ \nset-plot-pen-color white\nplot bestoffer - bid-offer\n][\nset-plot-pen-color blue\nplot bestbid\n]"
 "market offer" 1.0 0 -2674135 true "" "let bestoffer [ offer ] of min-one-of dealers [ offer ]\nlet bestbid [ bid ] of max-one-of dealers [ bid ]\nifelse bestoffer > 1e10 [\nset-plot-pen-color white \nplot bestbid + bid-offer\n][\nset-plot-pen-color red\nplot bestoffer\n]"
@@ -900,7 +682,7 @@ mm-PositionLimit
 mm-PositionLimit
 0
 100
-7.0
+15.0
 1
 1
 NIL
@@ -934,7 +716,7 @@ nMarketMakers
 nMarketMakers
 2
 20
-10.0
+20.0
 1
 1
 NIL
@@ -1030,7 +812,7 @@ nSmartInvestors
 nSmartInvestors
 0
 50
-50.0
+10.0
 1
 1
 NIL
@@ -1127,7 +909,7 @@ CHOOSER
 AI-investor-model
 AI-investor-model
 "Pretrained" "Not Pretrained"
-0
+1
 
 MONITOR
 762
@@ -1152,10 +934,10 @@ skew
 11
 
 PLOT
-921
-389
-1294
-525
+925
+393
+1298
+529
 Volatility
 NIL
 NIL
@@ -1188,12 +970,12 @@ NIL
 
 SWITCH
 204
-135
-352
-168
-mm-limit-toggle
-mm-limit-toggle
-1
+131
+399
+164
+enable-broker-market
+enable-broker-market
+0
 1
 -1000
 
