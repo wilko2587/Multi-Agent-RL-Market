@@ -1,6 +1,6 @@
 extensions [ py ]
 
-globals [ a returns p0 p1 price-history histogram-num-bars obs-length bidofferpaid bestbids bestoffers start-price meandeviation ai-trained-str]
+globals [ a returns p0 p1 price-history histogram-num-bars obs-length bidofferpaid bestbids bestoffers start-price meandeviation ]
 
 breed [ valueinvestors valueinvestor ]
 breed [ smartinvestors smartinvestor ]
@@ -15,14 +15,14 @@ smartinvestors-own [ confident? trade-holding-times state-memory positions trans
 priceindep-buyers-own [ lefttobuy ]
 
 
-to setup ; global procedure
+to setup
 
   clear-all
 
   random-seed 4
 
   set obs-length 500 ; length of price history used to train the smart valueinvestors RL. Keep at 500.
-  set a 0.01 ;0.2 * bid-offer / dealer-position-limit ; constant determining how much bid-offer increases as size increases. Model parameter
+  set a 0.01 ;0.2 * bid-offer / mm-PositionLimit ; constant determining how much bid-offer increases as size increases. Model parameter
 
   set bestbids []
   set bestoffers []
@@ -43,14 +43,9 @@ to setup ; global procedure
   set returns [] ; list for recording the returns
   set price-history []
   set meandeviation []
-  ifelse ai-investor-model = "Pretrained" [
-    set ai-trained-str "A.I. live!"
-  ][
-    set ai-trained-str "A.I. training..."
-  ]
+
   reset-ticks
-  update-price-plot
-  update-histogram
+
 end
 
 
@@ -61,7 +56,7 @@ to setup-python
 end
 
 
-to go ; global procedure
+to go
 
   ; 1) get an investor at random to act
   ask one-of turtles [
@@ -71,7 +66,7 @@ to go ; global procedure
     if breed = smartinvestors [
       smartinvestor-act
     ]
-    if ( breed = dealers ) and ( abs ( inventory ) > dealer-position-limit ) and enable-broker-market? [ ;
+    if ( breed = dealers ) and ( abs ( inventory ) > mm-PositionLimit ) and enable-broker-market [ ;
       dealer-act
     ]
   ]
@@ -87,7 +82,7 @@ to go ; global procedure
 end
 
 
-to update-pricehistory ; global procedure
+to update-pricehistory ; global
   set price-history lput mean [ expectation ] of dealers price-history
   ;set meandeviation lput ( mean [ expectation ] of dealers - mean [ expectation ] of valueinvestors ) meandeviation
   ask smartinvestors [
@@ -99,7 +94,7 @@ to update-pricehistory ; global procedure
 end
 
 
-to update-graphics ; global procedure
+to update-graphics ; global
     ask links [
       ifelse thickness < 0.2 [
         set color grey - 3
@@ -111,26 +106,20 @@ to update-graphics ; global procedure
       ]
     ]
     ask dealers [
-      if inventory > dealer-position-limit [
+      if inventory > mm-PositionLimit [
         set color green
       ]
-      if inventory < -1 * dealer-position-limit [
+      if inventory < -1 * mm-PositionLimit [
         set color red
       ]
-      if abs ( inventory ) < dealer-position-limit [
+      if abs ( inventory ) < mm-PositionLimit [
         set color grey + 3
       ]
     ]
-
-  ; set the ai-train-str to update if the AI has trained yet or not
-  if not any? smartinvestors with [ not confident? ] [
-    set ai-trained-str "A.I. live!"
-  ]
-
 end
 
 
-to record-returns ; global procedure
+to record-returns ; global
     if ( ticks mod 50 ) = 0 and not any? smartinvestors with [ not confident? ] [ ; record the price changes every 50 ticks
     set p1 price-level
     set returns lput (p1 - p0) returns
@@ -142,7 +131,7 @@ to record-returns ; global procedure
 end
 
 
-to step ; global procedure
+to step ; global
   ask dealers [
     refresh-bidoffer
   ]
@@ -164,7 +153,7 @@ end
 
 
 to dealer-act ; dealer procedure
-  let trade_size min list ( trade-size-cap ) ( abs ( inventory - dealer-position-limit ) )
+  let trade_size min list ( trade-size-cap ) ( abs ( inventory - mm-PositionLimit ) )
   if inventory < 0 [
     let bestdealer max-one-of link-neighbors with [ breed = dealers ] [ inventory ]
     ;set trade_size min list ( trade_size ) ( [ inventory ] of bestdealer ) ; dealers will only trade to make themselves flatter
@@ -182,7 +171,7 @@ to dealer-act ; dealer procedure
 end
 
 
-to smartinvestor-act ; smart-investor procedure
+to smartinvestor-act ; smartinvestor procedure
 
   py:set "id" who
 
@@ -248,7 +237,7 @@ to smartinvestor-act ; smart-investor procedure
 end
 
 
-to investor-act ; turtle procedure
+to investor-act ;
 
   let best_advertised_bid [ bid ] of max-one-of ( link-neighbors with [ breed = dealers ] ) [ bid ] ; best bid in the market
   let best_advertised_offer [ offer ] of min-one-of ( link-neighbors with [ breed = dealers ] ) [ offer ] ; best offer in the market
@@ -279,7 +268,7 @@ to investor-act ; turtle procedure
 end
 
 
-to transact [ direction tradesize counterpartyID ] ; turtle procedure
+to transact [ direction tradesize counterpartyID ]
 
   let factor 1 ;initialise
   ifelse direction = "buy" [ set factor -1 ][ set factor 1 ]
@@ -291,7 +280,7 @@ to transact [ direction tradesize counterpartyID ] ; turtle procedure
     set bestpx [ offer ] of counterparty
   ]
 
-  let max-natural-size  max list ( 0 ) ( [ dealer-position-limit + factor * inventory ] of counterparty ) ; amount of room the dealer can transact without breeching limits
+  let max-natural-size  max list ( 0 ) ( [ mm-PositionLimit + factor * inventory ] of counterparty ) ; amount of room the dealer can transact without breeching limits
 
   let excesspx bestpx - a * ( tradesize - max-natural-size ) ; The price the dealer will take the *excess* size above and beyond their limit
   let excess-size max list (0) ( tradesize - max-natural-size )
@@ -315,6 +304,9 @@ to transact [ direction tradesize counterpartyID ] ; turtle procedure
     set inventory inventory + factor * tradesize
   ]
 
+  ; printing stats
+  if verbose [ print ( word breed  who direction " " tradesize " to dealer" [ who ] of counterparty " @" size-adj-px ) ]
+
   ask my-links with [ end1 = counterparty ] [
     set thickness min list 2 tradesize * 0.2
     set hidden? false
@@ -328,9 +320,9 @@ to transact [ direction tradesize counterpartyID ] ; turtle procedure
 end
 
 
-to initialise-smartinvestors ; global procedure
+to initialise-smartinvestors
   let counter 0
-  create-ordered-smartinvestors n-smart-investors [
+  create-ordered-smartinvestors nSmartInvestors [
     set shape "person"
     set size 2
     fd 16
@@ -355,7 +347,7 @@ to initialise-smartinvestors ; global procedure
     set actions_index []
     set confident? false
 
-    if ai-investor-model = "Pretrained" [
+    if AI-investor-model = "Pretrained" [
       py:set "counter" counter
       py:run "modelname = 'DeepQtrader{}.pt'.format(counter)"
       py:run "agents[id].load_model(modelname)"
@@ -365,8 +357,8 @@ to initialise-smartinvestors ; global procedure
 end
 
 
-to initialise-valueinvestors; global procedure
-  create-ordered-valueinvestors n-value-investors [
+to initialise-valueinvestors
+  create-ordered-valueinvestors nValueInvestors [
     set shape "person"
     set size 2
     fd 13
@@ -384,8 +376,8 @@ to initialise-valueinvestors; global procedure
 end
 
 
-to initialise-dealers ; global procedure
-  create-ordered-dealers n-dealers [
+to initialise-dealers
+  create-ordered-dealers nMarketMakers [
     set shape "house"
     set size 3
     fd 5
@@ -401,7 +393,7 @@ to initialise-dealers ; global procedure
 end
 
 
-to plot-normal [ histogram-bins ] ; global procedure
+to plot-normal [ histogram-bins ]
   if not any? smartinvestors with [ not confident? ] [
     let meanPlot mean returns
     let varPlot variance returns
@@ -437,15 +429,16 @@ to-report skew
   ]
 end
 
-to move-market ; global procedure
+to move-market ; valueinvestorprocedure
+  ;setup-investors
   ask valueinvestors [
-    set expectation expectation * 0.8 ; force a market crash by reducing the value investor expectation
+    set expectation expectation * 0.8 ; force a market crash
   ]
 end
 
-to force-dealers-short ; global procedure. when called, forces dealers to get limit-long
+to force-dealers-short ; when called, forces dealers to get limit-long
   ask dealers [
-    set inventory -1 * dealer-position-limit * 1.5
+    set inventory -1 * mm-PositionLimit * 1.5
   ]
 end
 
@@ -518,40 +511,24 @@ to-report sensitivity-function [ x ]
 end
 
 to-report smartinvestor-rewards
-  let meanreward ( py:runresult "sum([agents[id].totalreward for id in agents.keys()])" ) / n-smart-investors
+  let meanreward ( py:runresult "sum([agents[id].totalreward for id in agents.keys()])" ) / nSmartInvestors
   report meanreward
 end
 
 to-report smartinvestor-epsilon
-  let epsilon py:runresult "sum([agents[id].epsilon for id in agents.keys()])" / n-smart-investors
+  let epsilon py:runresult "sum([agents[id].epsilon for id in agents.keys()])" / nSmartInvestors
   report epsilon
 end
 
 to-report z-score [x _mean var ]; z scores x on normal distro with _mean and var
   report abs( x - _mean ) / sqrt ( var )
 end
-
-to update-price-plot; plot procedure
-  set-plot-x-range ( max list ( 0 ) ( ticks - 2000 ) ) ticks + 10
-  if length price-history > 2000 [
-  let last2000 sublist price-history ( length price-history - 2000 ) ( length price-history )
-  let ymax max last2000
-  let ymin min last2000
-  set-plot-y-range ( precision ymin 2 ) ( precision ymax 2 )
-  ]
-end
-
-to update-histogram; plot procedure
-  clear-plot
-  set-plot-x-range ( -1 * bid-offer * 20 ) ( bid-offer * 20 )
-  set histogram-num-bars 2 * ( plot-x-max - plot-x-min ) / bid-offer
-end
 @#$#@#$#@
 GRAPHICS-WINDOW
-814
-143
-1188
-518
+926
+14
+1300
+389
 -1
 -1
 11.1
@@ -575,25 +552,25 @@ ticks
 30.0
 
 SLIDER
-17
-144
-189
-177
-n-value-investors
-n-value-investors
+14
+123
+186
+156
+nValueInvestors
+nValueInvestors
 0
-40
-5.0
+50
+10.0
 1
 1
 NIL
 HORIZONTAL
 
 BUTTON
-28
-10
-94
-43
+13
+24
+79
+57
 NIL
 setup
 NIL
@@ -607,32 +584,32 @@ NIL
 1
 
 MONITOR
-530
-268
-597
-313
-live offer
+585
+13
+644
+58
+OFFER
 best-offer
 2
 1
 11
 
 MONITOR
-460
-268
-525
-313
-live bid
+515
+13
+580
+58
+BID
 best-bid
 2
 1
 11
 
 BUTTON
-111
-52
-180
-85
+94
+73
+157
+106
 go
 go
 T
@@ -646,10 +623,10 @@ NIL
 1
 
 BUTTON
-28
-52
-93
-85
+15
+72
+80
+105
 go-once
 go
 NIL
@@ -663,10 +640,10 @@ NIL
 1
 
 PLOT
-236
-330
-736
-521
+407
+65
+907
+287
 Price
 ticks
 price
@@ -676,33 +653,33 @@ price
 10.0
 true
 true
-"set-plot-y-range 99 101" "update-price-plot"
+"set-plot-y-range 99 101" "set-plot-x-range ( max list ( 0 ) ( ticks - 2000 ) ) ticks + 10\nif length price-history > 2000 [\nlet last2000 sublist price-history ( length price-history - 2000 ) ( length price-history )\nlet ymax max last2000\nlet ymin min last2000\nset-plot-y-range ( precision ymin 2 ) ( precision ymax 2 )\n]"
 PENS
 "market bid" 1.0 0 -13345367 true "" "let bestbid [ bid ] of max-one-of dealers [ bid ]\nlet bestoffer [ offer ] of min-one-of dealers [ offer ]\nifelse bestbid = -1e11 [ \nset-plot-pen-color white\nplot bestoffer - bid-offer\n][\nset-plot-pen-color blue\nplot bestbid\n]"
 "market offer" 1.0 0 -2674135 true "" "let bestoffer [ offer ] of min-one-of dealers [ offer ]\nlet bestbid [ bid ] of max-one-of dealers [ bid ]\nifelse bestoffer > 1e10 [\nset-plot-pen-color white \nplot bestbid + bid-offer\n][\nset-plot-pen-color red\nplot bestoffer\n]"
 
 SLIDER
-16
-278
-188
-311
+13
+257
+185
+290
 bid-offer
 bid-offer
 0
 2
-0.7
+0.5
 0.1
 1
 NIL
 HORIZONTAL
 
 SLIDER
-16
-326
-188
-359
-dealer-position-limit
-dealer-position-limit
+13
+305
+185
+338
+mm-PositionLimit
+mm-PositionLimit
 0
 100
 15.0
@@ -712,10 +689,10 @@ NIL
 HORIZONTAL
 
 PLOT
+407
+292
+909
 459
-72
-740
-239
 Realised Return
 50 tick change
 Count
@@ -725,31 +702,31 @@ Count
 10.0
 true
 true
-"update-histogram" ""
+"clear-plot\nset-plot-x-range ( -1 * bid-offer * 20 ) ( bid-offer * 20 )\nset histogram-num-bars 2 * ( plot-x-max - plot-x-min ) / bid-offer" ""
 PENS
 "Observed" 1.0 1 -16777216 true "set-histogram-num-bars histogram-num-bars" "set-histogram-num-bars histogram-num-bars\nhistogram returns"
 "Normal" 1.0 2 -5298144 true "" "plot-normal histogram-num-bars"
 
 SLIDER
-19
-187
-191
-220
-n-dealers
-n-dealers
+16
+166
+188
+199
+nMarketMakers
+nMarketMakers
 2
 20
-5.0
+20.0
 1
 1
 NIL
 HORIZONTAL
 
 BUTTON
-271
-204
-385
-237
+210
+340
+324
+373
 Market Crash
 move-market
 NIL
@@ -762,12 +739,44 @@ NIL
 NIL
 1
 
+SWITCH
+205
+83
+308
+116
+verbose
+verbose
+1
+1
+-1000
+
+MONITOR
+699
+13
+780
+58
+mean view
+mean [ expectation ] of valueinvestors
+1
+1
+11
+
+TEXTBOX
+211
+258
+361
+276
+Market Scenarios\n
+11
+0.0
+1
+
 BUTTON
-246
-255
-413
-288
-Force Dealers short
+210
+289
+377
+322
+Force Market Makers short
 Force-Dealers-Short
 NIL
 1
@@ -780,10 +789,10 @@ NIL
 1
 
 SLIDER
-16
-416
-188
-449
+13
+395
+185
+428
 trade-size-cap
 trade-size-cap
 0
@@ -795,25 +804,25 @@ NIL
 HORIZONTAL
 
 SLIDER
-19
-233
-191
-266
-n-smart-investors
-n-smart-investors
+16
+212
+188
+245
+nSmartInvestors
+nSmartInvestors
 0
-30
-20.0
+50
+10.0
 1
 1
 NIL
 HORIZONTAL
 
 SLIDER
-16
-369
-188
-402
+13
+348
+185
+381
 prob-of-link
 prob-of-link
 0
@@ -825,25 +834,25 @@ NIL
 HORIZONTAL
 
 SLIDER
-16
-462
-188
-495
+13
+441
+185
+474
 market-disparity
 market-disparity
 0
 20
-0.0
+20.0
 1
 1
 NIL
 HORIZONTAL
 
 BUTTON
-254
-153
-410
-186
+210
+390
+366
+423
 Remove Value Investors
 kill-value-investors
 NIL
@@ -856,21 +865,57 @@ NIL
 NIL
 1
 
+PLOT
+408
+467
+694
+587
+smartinvestor profit
+ticks
+total PnL
+0.0
+10.0
+0.0
+10.0
+true
+false
+"" "; set-plot-x-range ( max list ( 0 ) ( ticks - 2000 ) ) ticks + 10"
+PENS
+"default" 1.0 0 -16777216 true "" "if not any? smartinvestors with [ not confident? ] [\nplot smartinvestor-rewards\n]"
+
+PLOT
+708
+468
+908
+588
+average epsilon
+NIL
+NIL
+0.0
+10.0
+0.0
+1.0
+true
+false
+"" ""
+PENS
+"default" 1.0 0 -16777216 true "" "plot smartinvestor-epsilon"
+
 CHOOSER
-246
-42
-409
-87
-ai-investor-model
-ai-investor-model
+205
+189
+368
+234
+AI-investor-model
+AI-investor-model
 "Pretrained" "Not Pretrained"
 1
 
 MONITOR
-671
-129
-736
-174
+762
+322
+827
+367
 Kurtosis
 kurtosis
 3
@@ -878,21 +923,39 @@ kurtosis
 11
 
 MONITOR
-670
-179
-737
-224
+439
+322
+506
+367
 Skew
 skew
 3
 1
 11
 
+PLOT
+925
+393
+1298
+529
+Volatility
+NIL
+NIL
+0.0
+10.0
+0.0
+0.1
+true
+false
+"" ""
+PENS
+"default" 1.0 0 -16777216 true "" "if length price-history > 500 * 30 [\n  plot rollingVol 500 30\n]"
+
 BUTTON
-111
-10
-182
-43
+101
+27
+172
+60
 repeat
 ifelse ticks > 30000 [ \n  setup\n  go\n][\n  go\n]
 T
@@ -906,74 +969,70 @@ NIL
 1
 
 SWITCH
-15
-100
-190
-133
-enable-broker-market?
-enable-broker-market?
-1
+204
+131
+399
+164
+enable-broker-market
+enable-broker-market
+0
 1
 -1000
 
 MONITOR
-615
-267
-732
-312
-A.I. status
-ai-trained-str
-17
+794
+15
+860
+60
+mean px
+mean price-history
+1
 1
 11
-
-TEXTBOX
-266
-124
-416
-142
-Market Scenarios to try:
-11
-0.0
-1
 
 @#$#@#$#@
 ## WHAT IS IT?
 
-This model simulates a price within a financial market. Three types of agent - value investors, reinforcement-learning investors, and market makers (dealers) - trade against one another, causing the market price to change. The price movements produced by this model resemble those seen in the real world, with fat tailed distributions, volatility clustering and technicals.
+This model simulates the evolution of the price of a financial instrument by modelling a market with an agent based approach. The model comprises of a set of investors interracting versus market-makers.
+
+The goal of this model is to simulate a free market with static information, which allows investigation into the pricing dynamics of a market, the impact of market structure on market function, the diffusion of information via price action within a market, and more.
+
+The model comprises of market-makers (house-shaped turtles) which provide prices, value-investors (blue person-shaped turtles) who buy or sell based on pre-determined views on the market (which can be interpreted as analyst expectations), and AI smart-traders (red person-shaped turtles) which are trained using reinforcement learning methods. 
+
+Trades occur between investors and market-makers down the visible link turtles, which flash green when an investor buys, and red when an investor sells.
 
 
 ## HOW IT WORKS
 
-This market comprises of a single product, that agents can either buy, or sell. Investors actively buy and sell this product based on their opinion about its future price. Some investors, whom we call value investors, have static, long-term opinions about the future price. Other investors, which we call smart investors, have dynamic, shorter-term opinions aimed at exploiting forseable behaviour within the system. Dealers are counterparties to all trades and will move their price according to both the trades they see happening, and their inventory.
+Market-makers begin with their prices centered at 100.
 
-Value-investors are initialised with a randomly generated number in the vicinity of the inital market price. If their number is higher than the market price, they will choose to buy from a dealer (and vice versa if it is lower). The value-investor is a direct analogy to investors using fundamental analysis.
+Value-investors are initialised with an "opinion" about the market price, and an uncertainty about their opinion. If their opinion is higher than the prevailing market price, they will buy from a market maker (and vice versa if their opinion is lower than the prevailing market price). Once a trade occurs, the price of the trade is "published", and all market-makers adjust their prices towards the published trade price. When an investor transacts, they will transact versus the market-maker with the most attractive price.
 
-Smart-investors use artificial intelligence to maximize their trading profit. These agents make decisions informed by the market price history. Smart-investors are a direct analogy to investors using technical analysis, and their behaviour can encompass trend-following strategies, mean-reversion strategies, and more.
+Value-investors will increase the size of their trade proportionally to the difference between their opinion and the transactable market price, and inversly proportionally to their uncertainty up to a maximum trade size (trade-size-cap). Market-makers have a soft limit (marketMaker-limit) to how long or short they can be at any moment. A trade that puts the market-maker outside of the marketMaker-limit will result in the trade commission increasing linearly with the resulting limit-breech.
 
-## THINGS TO NOTICE
+Smart-investors are AI bots trained to profit off of fixed-sized trades. Trade sizes are fixed to be smartsize.
 
-Clicking the go button within the view will begin the model. Initially, notice the price chart updating, separately showing the optimal bid and offer price across all of the dealers at each time step.
+Market-makers can also act as investors and trade versus one another, a behaviour that is triggered when the mm-limit-toggle is turned on and when market-makers breech their soft limit. When this criteria is met, market-makers sell or buy versus the other market-makers in a size that restors them inside their soft limits.
 
-The user will have to wait until the A.I. is fully trained before price movements are illustrated on the histrogram, which will be indicated by the A.I. Status monitor in the view. Notice if the price changes is normally distributed or not. The kurtosis of the distribution is displayed with the histrogram, and a kurtosis above 3 implies a fat-tailed distribution.
 
-Notice that configurations with relatively few dealers result in fat-tailed price changes. Conversely, increasing the number of dealers results in more normally-distributed price changes.
 
 ## HOW TO USE IT
 
-You can intuitively adjust the structure of the market, varying the number of dealers, value investors, smart investors, and more.
+You can intuitively adjust the structure of the market, varying the number of market makers, the number of value investors and the number of AI smartinvestors.
 
 ### Slider functions
 
-n-value-investors : the number of value-investors (blue person turtles) initialised in the model
+nValueInvestors : the number of value-investors (blue person turtles) initialised in the model
 
-n-dealers : the number of dealers (house turtles) initialised in the model
+nMarketMakers : the number of market-makers (house turtles) initialised in the model
 
-n-smart-investors : the number of A.I. investors (red person turtles) initialised in the model
+nSmartInvestors : the number of AI investors (red person turtles) initialised in the model
 
-bid-offer : the commission associated with one trade. This is the difference between a dealer's offer (sell) price and bid (buy) price.
+bid-offer : the commission associated with trading. This is the difference between a market-maker's offer price and bid price.
 
-dealer-position-limit : the position size a market maker can accumulate before they begin skewwing their price, or (if the mm-limit-toggle is turned on) before a market-maker will transact with other market-makers to reduce their position size.
+price-sensitivity: When a market maker observes a trade that has happened away from them, this parameter represent the percentage proprtion of how fast they move their mid price to the trade price. If 100, market makers will move their mid-prices directly to any new trade price. If 50, the market makers will move their prices half way between their original price, and the trade price.
+
+mm-PositionLimit : the position size a market maker can accumulate before they begin skewwing their price, or (if the mm-limit-toggle is turned on) before a market-maker will transact with other market-makers to reduce their position size.
 
 prob-of-link : the probability of a link forming between a turtle and a market maker. NB: This is constrained so every turtle is connected to at least one market maker.
 
@@ -981,12 +1040,15 @@ trade-size-cap : the limit to the size of a single trade allowed to be executed 
 
 market-disparity : the difference between the two-normal distribution means from which value-investor opinions are drawn from. When the market-disparity is increased, the two normal distributions become centered equidistant on either side of 100 by this amount. When market-disparity is zero, all value investors will have their expectation drawn from a normal distribution centered at 100. If the market disparity is 20, approximately half of the value-investors have their expectations drawn from a normal distribution centered at 120, whilst the other half have their normal distribution centered at 80.
 
+smartsize : the fixed trade size allowed by a smartinvestor (the AI bot)
 
 ### Toggles
 
-enable-broker-market : turn ON to trigger dealer behaviour, where dealers with position sizes greater than dealer-position-limit will trade versus one another to restore their position to be equal to dealer-position-limit (restoring them within their limits).
+verbose : turn ON to see a print out of the trades happening in the market
 
-### SIMULATING MARKET SCENARIOS
+mm-limit-toggle : turn ON to trigger market-maker behaviour, where market-makers with position sizes greater than mm-PositionLimit will trade versus one another to restore their position to be equal to mm-PositionLimit (restoring them within their limits).
+
+### Buttons
 
 Market scenarios can be forced by clicking the below buttons:
 
@@ -1001,25 +1063,9 @@ Remove Value Investors : this button removes all value-investors from the system
 
 smart-investor-model : Select pretrained to use a pretrained model for the AI bots. In this case, the bots will not continue learning as they invest. Select not-pretrained to start each AI bot with randomly initialised neural networks. The bots will learn over time, choosing actions more deterministically as epsilon decreases.
  
-## THINGS TO TRY
+## THINGS TO NOTICE
 
-The focal point of this model is the price distribution. Note the Kurtosis and Skew of the distribution, and how it deviates from a normal distribution. Find which parameters create a distribution with a kurtosis above 3 (ie: a fat-tailed distribution), and notice how the skew is influenced by the prevailing market-maker positioning (when market-makers become too long, the skew becomes negative; and vice-versa when they become too short).
-
-Try the market scenario buttons, for example to force a market crash. See if the price volatility increases after the crash. Alter the setup parameters to see what factors cause faster crashes than others.
-
-## EXTENDING THE MODEL
-
-Try adding in a new class of investor: the trend investor. You can decide how this investor will spot identify trends in the market price, but they could deterministically act to follow any established trends that they spot. How would this alter the price distribution? Would its kurtosis increase or decrease if trend investors are added?
-
-Try introducing smart-investors in two waves, so that the second cohort of smart-investors gets initialised and begins training immediately after the first cohort finishes their training phase.
-
-## CREDITS AND REFERENCES
-
-Wilkinson, J.T (2022) *additional credits here?*
-
-## HOW TO CITE
-
-TO DO
+The focal point of this model is the price distribution. Note the Kurtosis and Skew of the distribution, and how it deviates from a normal distribution. Find which parameters create a Kurtosis of above 3 (ie: a fat-tailed distribution), and notice how the skew is influenced by the prevailing market-maker positioning (when market-makers become too long, the skew becomes negative; and vice-versa when they become too short).
 @#$#@#$#@
 default
 true
@@ -1087,18 +1133,6 @@ false
 0
 Circle -7500403 true true 0 0 300
 Circle -16777216 true false 30 30 240
-
-computer
-false
-0
-Polygon -7500403 true true 105 90 120 195 90 285 105 300 135 300 150 225 165 300 195 300 210 285 180 195 195 90
-Rectangle -7500403 true true 127 79 172 94
-Polygon -7500403 true true 195 90 240 150 225 180 165 105
-Polygon -7500403 true true 105 90 60 150 75 180 135 105
-Rectangle -7500403 true true 111 8 186 68
-Rectangle -13791810 true false 119 15 179 60
-Rectangle -7500403 true true 45 105 60 105
-Rectangle -7500403 true true 142 67 157 82
 
 cow
 false
