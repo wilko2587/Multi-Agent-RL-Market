@@ -1,18 +1,16 @@
 extensions [ py ]
 
-globals [ a returns p0 p1 price-history histogram-num-bars obs-length bidofferpaid bestbids bestoffers start-price meandeviation ai-trained-str]
+globals [ a returns p0 p1 price-history histogram-num-bars obs-length bidofferpaid ai-trained-str]
 
 breed [ valueinvestors valueinvestor ]
 breed [ smartinvestors smartinvestor ]
 breed [ dealers dealer ]
-breed [ priceindep-buyers priceindep-buyer ] ; retail buyer
 
 turtles-own [ expectation inventory ]
-links-own [ weight ]
+links-own [ weight ] ; weight will represent the size of trade between two parties for visual illustration
 dealers-own [ bid offer last-trade ] ; bid and offer prices
-valueinvestors-own [ mynumber avgbuynum avgsellnum uncertainty ]
+valueinvestors-own [ uncertainty ]
 smartinvestors-own [ confident? trade-holding-times state-memory positions transaction-prices ctransaction-price recent-price-history actions_index ]
-priceindep-buyers-own [ lefttobuy ]
 
 
 to setup ; global procedure
@@ -22,10 +20,7 @@ to setup ; global procedure
   random-seed 4
 
   set obs-length 500 ; length of price history used to train the smart valueinvestors RL. Keep at 500.
-  set a 0.01 ;0.2 * bid-offer / dealer-position-limit ; constant determining how much bid-offer increases as size increases. Model parameter
-
-  set bestbids []
-  set bestoffers []
+  set a 0.01 ; constant determining how much bid-offer increases as size increases. Model parameter
 
   setup-python
   initialise-dealers
@@ -42,7 +37,6 @@ to setup ; global procedure
   set p0 price-level ; cache the price level
   set returns [] ; list for recording the returns
   set price-history []
-  set meandeviation []
   ifelse ai-investor-model = "Pretrained" [
     set ai-trained-str "A.I. live!"
   ][
@@ -89,7 +83,6 @@ end
 
 to update-pricehistory ; global procedure
   set price-history lput mean [ expectation ] of dealers price-history
-  ;set meandeviation lput ( mean [ expectation ] of dealers - mean [ expectation ] of valueinvestors ) meandeviation
   ask smartinvestors [
     set recent-price-history lput ( mean [ expectation ] of link-neighbors with [ breed = dealers ] - 100 ) recent-price-history ; -100 to make neural network inputs closer to 0
     if length recent-price-history > obs-length [
@@ -135,9 +128,6 @@ to record-returns ; global procedure
     set p1 price-level
     set returns lput (p1 - p0) returns
     set p0 p1
-    if start-price = 0 [
-      set start-price mean [ expectation ] of dealers
-    ]
   ]
 end
 
@@ -149,8 +139,6 @@ to step ; global procedure
 
   let bestbid max [ bid ] of dealers
   let bestoffer min [ offer ] of dealers
-  set bestbids lput bestbid bestbids
-  set bestoffers lput bestoffer bestoffers
 end
 
 
@@ -457,10 +445,6 @@ end
 
 to-report normal [x mu var]
   report 1 / sqrt ( 2 * pi * var ) * exp ( - ((x - mu) ^ 2) / (2 * var) )
-end
-
-to-report benchmark-level
-  report sum [ mynumber ] of valueinvestors
 end
 
 to-report price-level
