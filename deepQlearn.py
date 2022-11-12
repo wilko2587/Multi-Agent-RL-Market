@@ -15,6 +15,7 @@ class FFnet(nn.Module):
 
     def __init__(self, lr, fc2_dims, fc3_dims, out_dims, activation = F.relu):
         super(FFnet, self).__init__()
+        # input size of 500
         self.conv1 = nn.Conv1d(1, 32, kernel_size=32, stride=2)
         self.max1 = nn.MaxPool1d(16)
         self.conv2 = nn.Conv1d(32, 32, kernel_size=3)
@@ -56,20 +57,20 @@ class FFnet(nn.Module):
 
 
 class SmartTrader:
-    def __init__(self, lr, state_size, eps_decay = 0.999, batch_size=64,
-                 fc2_dims=32, fc3_dims=32, confidence_epsilon_thresh=0.1,
+    def __init__(self, lr, state_size, eps_decay = 0.99, batch_size=32,
+                 fc2_dims=32, fc3_dims=32, confidence_epsilon_thresh=0.05,
                  gamma = 0.99):
 
         self.state_size = int(state_size)
-        self.memory = deque(maxlen=2000)
+        self.memory = deque(maxlen=1000)
         self.state_size = state_size
 
         self.epsilon = 1.0  # exploration rate
-        self.epsilon_min = 0.001
         self.epsilon_decay = eps_decay
         self.gamma = gamma
         self.batch_size = batch_size
         self.lr = lr
+        
         self.action_dict = {
             0: ["sell", 2, 100], # buy/sell, size, holding time
             1: ["sell", 2, 250],
@@ -88,7 +89,6 @@ class SmartTrader:
 
         self.action_size = len(self.action_dict)
 
-
         self.experience = 0
         self.totalreward = 0
         self.confident = False # bool to turn True when epsilon is low enough
@@ -98,18 +98,16 @@ class SmartTrader:
         self.model = FFnet(lr, fc2_dims, fc3_dims, self.action_size)
 
     def remember(self, state, action, next_state, reward):
-        #€state = np.array(state)#[::self.state_reduction]
-        #€next_state = np.array(next_state)#[::self.state_reduction]
 
         if len(state) == self.state_size:
             self.memory.append((state, action, next_state, reward))
 
             if self.epsilon < self.confidence_epsilon_thresh:
                 self.confident = True
-                self.totalreward += reward
+                self.totalreward += reward # tracker to keep hold of rewards resulting from intentional actions
 
             if len(self.memory) > self.batch_size:
-                if self.epsilon > self.epsilon_min:
+                if self.epsilon >= self.confidence_epsilon_thresh:
                     self.epsilon *= self.epsilon_decay
 
     def act(self, state):
