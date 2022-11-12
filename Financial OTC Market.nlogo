@@ -567,7 +567,7 @@ n-value-investors
 n-value-investors
 0
 40
-5.0
+20.0
 1
 1
 NIL
@@ -689,7 +689,7 @@ dealer-position-limit
 dealer-position-limit
 0
 100
-15.0
+10.0
 1
 1
 NIL
@@ -723,7 +723,7 @@ n-dealers
 n-dealers
 2
 20
-5.0
+10.0
 1
 1
 NIL
