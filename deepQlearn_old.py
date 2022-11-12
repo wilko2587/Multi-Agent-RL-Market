@@ -13,16 +13,11 @@ random.seed(1)
 
 class FFnet(nn.Module):
 
-    def __init__(self, lr, fc2_dims, fc3_dims, out_dims, activation = F.relu):
+    def __init__(self, lr, input_dims, fc1_dims, fc2_dims, out_dims, activation = F.relu):
         super(FFnet, self).__init__()
-        self.conv1 = nn.Conv1d(1, 256, kernel_size=64)
-        self.max1 = nn.MaxPool1d(4)
-        self.conv2 = nn.Conv1d(256, 32, kernel_size=16)
-        self.max2 = nn.MaxPool1d(2)
-        self.max3 = nn.MaxPool2d((1, 32))
-        self.fc1 = nn.Linear(32, fc2_dims, bias=True)
-        self.fc2 = nn.Linear(fc2_dims, fc3_dims, bias=True)
-        self.fc3 = nn.Linear(fc3_dims, out_dims, bias=True)
+        self.fc1 = nn.Linear(input_dims, fc1_dims, bias=True)
+        self.fc2 = nn.Linear(fc1_dims, fc2_dims, bias=True)
+        self.fc3 = nn.Linear(fc2_dims, out_dims, bias=True)
         self.optimizer = optim.Adam(self.parameters(), lr=lr)
         self.criterion = nn.MSELoss
         self.activation = activation
@@ -31,22 +26,14 @@ class FFnet(nn.Module):
 
     def forward(self, x):
         if isinstance(x, np.ndarray):
-            x = torch.tensor(x).type(torch.float).to(self.device)
-        x = self.conv1(x)
-        x = self.activation(x)
-        x = self.max1(x)
-        x = self.conv2(x)
-        x = self.activation(x)
-        x = self.max2(x)
-        x = self.max3(x).view(-1, 32)
+            x = torch.tensor(x).type(torch.float)
         x = self.activation(self.fc1(x))
         x = self.activation(self.fc2(x))
-        x = self.activation(self.fc3(x))
+        x = self.fc3(x)
         return x
 
     def fit(self, x, target, epochs=1):
         x = torch.tensor(x).type(torch.float)
-        x = x.view(x.shape[0], -1, x.shape[1])
         for epoch in range(epochs):
             self.optimizer.zero_grad()  # zero the gradient buffers
             output = self(x)
@@ -58,12 +45,12 @@ class FFnet(nn.Module):
 
 class SmartTrader:
     def __init__(self, lr, state_size, eps_decay = 0.999, batch_size=64,
-                 fc2_dims=32, fc3_dims=32, confidence_epsilon_thresh=0.1,
+                 fc1_dims=50, fc2_dims=50, confidence_epsilon_thresh = 0.1, state_reduction=10,
                  gamma = 0.99):
 
-        self.state_size = int(state_size)
+        self.state_size = int(state_size/state_reduction)
+        self.state_reduction = state_reduction
         self.memory = deque(maxlen=2000)
-        self.state_size = state_size
 
         self.epsilon = 1.0  # exploration rate
         self.epsilon_min = 0.001
@@ -88,7 +75,7 @@ class SmartTrader:
             }
 
         self.action_size = len(self.action_dict)
-
+                        
 
         self.experience = 0
         self.totalreward = 0
@@ -96,11 +83,11 @@ class SmartTrader:
         self.confidence_epsilon_thresh = confidence_epsilon_thresh
 
         # create main model
-        self.model = FFnet(lr, fc2_dims, fc3_dims, self.action_size)
+        self.model = FFnet(lr, self.state_size, fc1_dims, fc2_dims, self.action_size)
 
     def remember(self, state, action, next_state, reward):
-        #€state = np.array(state)#[::self.state_reduction]
-        #€next_state = np.array(next_state)#[::self.state_reduction]
+        state = np.array(state)[::self.state_reduction]
+        next_state = np.array(next_state)[::self.state_reduction]
 
         if len(state) == self.state_size:
             self.memory.append((state, action, next_state, reward))
@@ -114,15 +101,14 @@ class SmartTrader:
                     self.epsilon *= self.epsilon_decay
 
     def act(self, state):
-        state = np.array(state)#[::self.state_reduction]
-        state = state.reshape((1, 1, len(state)))
-        if state.shape[2] != self.state_size: # catch for dimensionality issues
+        state = np.array(state)[::self.state_reduction]
+        if len(state) != self.state_size: # catch for dimensionality issues
             return np.random.randint(0, self.action_size)
 
         if np.random.uniform(0, 1) < self.epsilon:
             return np.random.randint(0, self.action_size)
         else:
-            q_out = self.model(state).detach().numpy()
+            q_out = self.model.forward(state).detach().numpy()
             action = np.argmax(q_out)
             return action
 
@@ -152,8 +138,8 @@ class SmartTrader:
         # compute value function of current(call it target) and value function of next state(call it target_next)
         for i in range(self.batch_size):
             a = action[i]
-            Q_target_next = np.max(self.model(next_state[i].reshape((1, 1, self.state_size))).detach().numpy())
-            target[i] = self.model(state[i].reshape((1, 1, self.state_size))).detach().numpy()
+            Q_target_next = np.max(self.model.forward(next_state[i].reshape([1, len(next_state[i])])).detach().numpy())
+            target[i] = self.model.forward(state[i].reshape([1, len(state[i])])).detach().numpy()
             target[i, a] = reward[i] + self.gamma * Q_target_next
 
         self.model.fit(state, target, epochs=1)
