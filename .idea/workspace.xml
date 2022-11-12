@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="74419b36-75de-4c25-99af-34ab70d4a016" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/Market Model 1.pdf" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Multi_agent_model_of_stock_returns.pdf" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/__pycache__/deepQlearn.cpython-37.pyc" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/__pycache__/deepQlearnV2.cpython-37.pyc" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/misc/Arb copy.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/misc/Arb.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/misc/Color1.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/misc/Color2.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/misc/Color3.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/misc/Color4 copy.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/misc/Color4.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/misc/DealerVolvKurtosis.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/misc/Eg.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/misc/Figure_1.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/misc/KurtosisSmartVol.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/misc/KurtosisVai.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/misc/crash.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/misc/dealerPosSkew.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/misc/fragmetation_mean.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/misc/histogram.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/misc/reversionAroundMean.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/misc/reversionBW.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/misc/technicals.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/misc/zipf.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/results/Color1.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/results/DeepQFinancialMarket Kurtosis-vs-smartVolume-spreadsheet copy.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/results/DeepQFinancialMarket Kurtosis-vs-smartVolume-spreadsheet.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/results/DeepQFinancialMarket Kurtosis-vs-smartVolume-spreadsheet.numbers" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/results/DeepQFinancialMarket Kurtosis_vs_SmartVolume-spreadsheet.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/results/DeepQFinancialMarket copy Price.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/results/DeepQFinancialMarket copy getvolatility-spreadsheet.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/results/DeepQFinancialMarket dealerPosition-vs-skew-spreadsheet copy.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/results/DeepQFinancialMarket dealerPosition-vs-skew-spreadsheet.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/results/DeepQFinancialMarket dealerPosition-vs-skew-spreadsheet.numbers" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/results/MarketCrash.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/results/MarketPricesmean109_disparity20.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/results/bid-offer.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/results/bidoffer_fragmentation0.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/results/bidoffer_fragmentation1.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/results/bidoffer_fragmentation2.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/results/bidoffer_fragmentation3.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/results/bidoffer_fragmentation4.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/results/bidoffer_fragmentation5.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/results/bidoffer_fragmentation6.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/results/bidoffer_fragmentation7.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/results/bidoffer_fragmentation_save.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/results/divergence_vs_volume.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/results/fragmentation-mean.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/results/plot_KurtosisSmartVol.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/results/plot_SkewDealerPos.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/results/plot_bidoffer.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/results/plot_fragmentationMean.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/results/plot_histogram.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/results/plot_marketcrash.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/results/plot_meanoscillations.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/results/plot_phasechange.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/results/plot_powerlaw.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/results/plot_powertail.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/results/returns_market_fragmentation.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/results/returns_market_fragmentation0.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/results/returns_market_fragmentation1.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/results/returns_market_fragmentation2.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/results/returns_market_fragmentation3.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/results/returns_market_fragmentation4.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/results/returns_market_fragmentation_save.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/results/returns_multi.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/results/returns_multirun_basic.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/results/returns_w0_smart.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/results/returns_w_smart.csv" beforeDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="ProjectId" id="2GEygIY06OnxDIFN4UpcgTlZxT5" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">
+    <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
+    <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
+    <property name="WebServerToolWindowFactoryState" value="false" />
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="74419b36-75de-4c25-99af-34ab70d4a016" name="Changes" comment="" />
+      <created>1665968149733</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1665968149733</updated>
+      <workItem from="1665968151222" duration="640000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+</project>

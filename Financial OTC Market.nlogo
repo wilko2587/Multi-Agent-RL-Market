@@ -334,7 +334,7 @@ to initialise-smartinvestors ; global procedure
     py:set "state_size" obs-length
     py:set "eps_decay" 0.99
     py:set "gamma" 0.99
-    py:run "agents[id] = q.SmartTrader(lr, state_size, eps_decay=eps_decay, batch_size=32, gamma=gamma, state_reduction=10)"
+    py:run "agents[id] = q.SmartTrader(lr, state_size, eps_decay=eps_decay, batch_size=32, gamma=gamma)"
 
     set trade-holding-times []
     set positions []
