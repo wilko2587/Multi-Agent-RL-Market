@@ -560,7 +560,7 @@ n-value-investors
 n-value-investors
 0
 40
-5.0
+20.0
 1
 1
 NIL
