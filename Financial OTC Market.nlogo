@@ -17,8 +17,8 @@ to setup ; global procedure
 
   clear-all
 
-  set obs-length 500 ; length of price history used to train the smart valueinvestors RL. Keep at 500.
-  set a 0.01 ; constant determining how much bid-offer increases as size increases. Model parameter
+  set obs-length 512 ; length of price history used to train the smart valueinvestors RL. Keep at 500.
+  set a 0.1 ; constant determining how much bid-offer increases as size increases. Model parameter
 
   setup-python
   initialise-dealers
@@ -37,13 +37,11 @@ to setup ; global procedure
   set price-history []
   set ai-trained-str "A.I. training..."
   reset-ticks
-  update-price-plot
-  update-histogram
 end
 
 
 to setup-python
-  let path-to-python "/Users/jameswilkinson/.conda/envs/NetLogoQLearn/bin/python"
+  let path-to-python "/Users/jameswilkinson/opt/miniforge3/envs/Multi-Agent-RL-Market/bin/python"
   ; basic checks and error messages
   if path-to-python = "" [
     error "Path to python executable not set. Please update path-to-python to your python executable with the installed requirements outlined in the info-tab."
@@ -154,7 +152,7 @@ end
 
 
 to refresh-bidoffer ; dealer procedure
-  let axe-adj min list bid-offer a * sensitivity-function ( -1 * inventory  )
+  let axe-adj a * sensitivity-function ( -1 * inventory  )
   set expectation last-trade + axe-adj
 
   set offer ( expectation + bid-offer / 2 )
@@ -168,14 +166,14 @@ to dealer-act ; dealer procedure
     let bestdealer max-one-of link-neighbors with [ breed = dealers ] [ inventory ]
     ;set trade_size min list ( trade_size ) ( [ inventory ] of bestdealer ) ; dealers will only trade to make themselves flatter
     if trade_size > 0 [
-      transact "buy" trade_size [ who ] of bestdealer
+      transact "buy" trade_size [ who ] of bestdealer true
     ]
   ]
   if inventory > 0 [
     let bestdealer min-one-of link-neighbors with [ breed = dealers ] [ inventory ]
     ;set trade_size min list ( trade_size ) ( -1 * [ inventory ] of bestdealer ) ; dealers will only trade to make themselves flatter
     if trade_size > 0 [
-      transact "sell" trade_size [ who ] of bestdealer
+      transact "sell" trade_size [ who ] of bestdealer true
     ]
   ]
 end
@@ -196,11 +194,11 @@ to smartinvestor-act ; smart-investor procedure
     let _position ( item index positions )
     if _position > 0 [
       let bestdealer [ who ] of min-one-of link-neighbors with [ breed = dealers ] [ inventory ]
-      transact "sell" _position bestdealer
+      transact "sell" _position bestdealer false
     ]
     if _position < 0 [
       let bestdealer [ who ] of max-one-of link-neighbors with [ breed = dealers ] [ inventory ]
-      transact "buy" -1 * _position bestdealer
+      transact "buy" -1 * _position bestdealer false
     ]
 
     set bidofferpaid bidofferpaid + bid-offer
@@ -212,11 +210,12 @@ to smartinvestor-act ; smart-investor procedure
     py:run "agents[id].remember(state, action, next_state, reward)"
     py:run "agents[id].learn()"
 
-    ; finally, remove memory of the trade which is now closed
+    ; finally, remove storage of the trade which is now closed
     set positions remove-item index positions
     set trade-holding-times remove-item index trade-holding-times
     set transaction-prices remove-item index transaction-prices
     set state-memory remove-item index state-memory
+    set actions_index remove-item index actions_index
 
   ][ ; else, make a new action
 
@@ -227,17 +226,22 @@ to smartinvestor-act ; smart-investor procedure
     let buy_sell item 0 act_list
     let trade_size item 1 act_list
     let trade_time item 2 act_list
+
     set state-memory lput recent-price-history state-memory ; save the state associated with the action
-    set trade-holding-times lput ( ticks + trade_time ) trade-holding-times ; add a new counter to the list
+    ifelse buy_sell != "do nothing" [
+      set trade-holding-times lput ( ticks + trade_time ) trade-holding-times ; add a new counter to the list
+    ][
+      set trade-holding-times lput ( ticks ) trade-holding-times
+    ]
     set actions_index lput action actions_index
 
     if buy_sell = "buy" [
       let bestdealer [ who ] of max-one-of link-neighbors with [ breed = dealers ] [ inventory ]
-      transact "buy" trade_size bestdealer
+      transact "buy" trade_size bestdealer true
     ]
     if buy_sell = "sell" [
       let bestdealer [ who ] of min-one-of link-neighbors with [ breed = dealers ] [ inventory ]
-        transact "sell" trade_size bestdealer
+        transact "sell" trade_size bestdealer true
     ]
     if buy_sell = "do nothing" [
       set transaction-prices lput 0 transaction-prices ; this is a "do nothing" transaction, reward will be zero so transaction_price doesn't matter
@@ -261,8 +265,8 @@ to valueinvestor-act ; value-investor procedure
     let bestbid [ bid ] of bestdealer
     let tradesize max list ( 0 ) ( inventory ) ; if positioned wrong way, we want to close out the position AND put on a trade
     ; if valueinvestoris not selling because of inventory limits, then act as normal. Else, trade to get within limits again
-    set tradesize min list ( trade-size-cap ) ( tradesize + ( bestbid - expectation ) / ( uncertainty ) )
-    transact "sell" tradesize [ who ] of bestdealer
+    set tradesize min list ( trade-size-cap ) ( tradesize + ( bestbid - expectation ) )
+    transact "sell" tradesize [ who ] of bestdealer false
   ]
 
    ;; 2) Buy
@@ -270,48 +274,58 @@ to valueinvestor-act ; value-investor procedure
     let bestdealer max-one-of link-neighbors with [ breed = dealers ] [ inventory ] ; naturally, this will select the dealer with most room
     let bestoffer [ offer ] of bestdealer
     let tradesize max list ( 0 ) ( -1 * inventory ) ; if positioned wrong way, we want to close out the position AND put on a trade
-    set tradesize min list ( trade-size-cap ) ( tradesize + ( expectation - bestoffer ) / ( uncertainty ) )
+    set tradesize min list ( trade-size-cap ) ( tradesize + ( expectation - bestoffer ) )
 
-    transact "buy" tradesize [ who ] of bestdealer
+    transact "buy" tradesize [ who ] of bestdealer false
   ]
 
 end
 
 
-to transact [ direction tradesize counterpartyID ] ; turtle procedure
+to transact [ direction tradesize counterpartyID record ] ; turtle procedure
 
   let factor 1 ;initialise
-  ifelse direction = "buy" [ set factor -1 ][ set factor 1 ]
-  let counterparty one-of dealers with [ who = counterpartyID ]
-  let bestpx 0 ; initialise
-  ifelse direction = "sell" [
-    set bestpx [ bid ] of counterparty
+  let counterparty 0 ; initialise
+  ifelse direction = "buy" [
+    set factor 1
+    set counterparty one-of dealers with [ inventory = max [ inventory ] of dealers ]
   ][
-    set bestpx [ offer ] of counterparty
+    set factor -1
+    set counterparty one-of dealers with [ inventory = min [ inventory ] of dealers ]
   ]
 
-  let max-natural-size  max list ( 0 ) ( [ dealer-position-limit + factor * inventory ] of counterparty ) ; amount of room the dealer can transact without breeching limits
+  let bestpx 0 ; initialise
+  let max-natural-size 0 ; initialise
+  ifelse direction = "sell" [
+    set bestpx [ bid ] of counterparty
+    set max-natural-size  max list ( 0 ) ( [ dealer-position-limit + factor * inventory ] of counterparty ) ; amount of room the dealer can transact without breeching limits
+  ][
+    set bestpx [ offer ] of counterparty
+    set max-natural-size  max list ( 0 ) ( [ dealer-position-limit + factor * inventory ] of counterparty ) ; amount of room the dealer can transact without breeching limits
+  ]
 
-  let excesspx bestpx - a * ( tradesize - max-natural-size ) ; The price the dealer will take the *excess* size above and beyond their limit
   let excess-size max list (0) ( tradesize - max-natural-size )
+  let excesspx bestpx + factor * sensitivity-function ( excess-size ) ; The price the dealer will take the *excess* size above and beyond their limit
   let size-adj-px ( ( bestpx * min list tradesize max-natural-size ) + ( excesspx * excess-size ) ) / tradesize ; weighted mean of the natural and excess prices
 
   if ( breed = smartinvestors ) [ ; NB: this would be nicer inside smartinvestor-act procedure, but it requires knowing size-adj-px so this is not an option.
     ifelse length trade-holding-times > 0 and min trade-holding-times <= ticks [ ; if it was an old trade being closed, remove the trade stats from the traders memory
       set ctransaction-price size-adj-px
       ][ ; else create a new part in the memory
-      set positions lput ( -1 * factor * tradesize ) positions ; sell is negative position
-      set transaction-prices lput size-adj-px transaction-prices
+      if record [
+        set positions lput ( tradesize ) positions
+        set transaction-prices lput size-adj-px transaction-prices
+      ];
     ]
   ]
 
-  set inventory inventory - factor * tradesize
+  set inventory inventory + factor * tradesize
   ask dealers with [ in-link-neighbor? counterparty ] [
     set last-trade size-adj-px
   ]
   ask counterparty [
     set last-trade size-adj-px
-    set inventory inventory + factor * tradesize
+    set inventory inventory - factor * tradesize
   ]
 
   ask my-links with [ end1 = counterparty ] [
@@ -343,9 +357,9 @@ to initialise-smartinvestors ; global procedure
     py:set "id" who
     py:set "lr" 1e-4
     py:set "state_size" obs-length
-    py:set "eps_decay" 0.98
-    py:set "gamma" 0.99
-    py:run "agents[id] = q.SmartTrader(lr, state_size, eps_decay=eps_decay, batch_size=32, gamma=gamma)"
+    py:set "eps_decay" 0.999
+    py:set "trade_size" trade-size-cap
+    py:run "agents[id] = q.SmartTrader(lr, state_size, eps_decay=eps_decay, batch_size=32, trade_size=trade_size)"
 
     set trade-holding-times []
     set positions []
@@ -491,7 +505,7 @@ to-report rollingVol [ period return_period ]
 end
 
 to-report sensitivity-function [ x ]
-  report x ; linear
+  report a * x ; linear
 end
 
 to-report smartinvestor-rewards
@@ -560,7 +574,7 @@ n-value-investors
 n-value-investors
 0
 40
-20.0
+10.0
 1
 1
 NIL
@@ -584,10 +598,10 @@ NIL
 1
 
 MONITOR
-421
-268
-488
-313
+416
+264
+483
+309
 live offer
 best-offer
 2
@@ -595,10 +609,10 @@ best-offer
 11
 
 MONITOR
-347
-267
-412
-312
+342
+263
+407
+308
 live bid
 best-bid
 2
@@ -641,9 +655,9 @@ NIL
 
 PLOT
 236
-330
+315
 736
-521
+523
 Price
 ticks
 price
@@ -653,7 +667,7 @@ price
 10.0
 true
 true
-"set-plot-y-range 99 101" "update-price-plot"
+"set-plot-y-range 99 101\nset-plot-x-range 0 100" "update-price-plot"
 PENS
 "market bid" 1.0 0 -13345367 true "" "let bestbid [ bid ] of max-one-of dealers [ bid ]\nlet bestoffer [ offer ] of min-one-of dealers [ offer ]\nifelse bestbid = -1e11 [ \nset-plot-pen-color white\nplot bestoffer - bid-offer\n][\nset-plot-pen-color blue\nplot bestbid\n]"
 "market offer" 1.0 0 -2674135 true "" "let bestoffer [ offer ] of min-one-of dealers [ offer ]\nlet bestbid [ bid ] of max-one-of dealers [ bid ]\nifelse bestoffer > 1e10 [\nset-plot-pen-color white \nplot bestbid + bid-offer\n][\nset-plot-pen-color red\nplot bestoffer\n]"
@@ -667,7 +681,7 @@ bid-offer
 bid-offer
 0
 2
-0.7
+0.9
 0.1
 1
 NIL
@@ -716,7 +730,7 @@ n-dealers
 n-dealers
 2
 20
-8.0
+7.0
 1
 1
 NIL
@@ -780,7 +794,7 @@ n-smart-investors
 n-smart-investors
 0
 30
-10.0
+5.0
 1
 1
 NIL
@@ -884,10 +898,10 @@ enable-broker-market?
 -1000
 
 MONITOR
-506
-267
-623
-312
+602
+263
+719
+308
 A.I. status
 ai-trained-str
 17
@@ -914,6 +928,17 @@ Wait for the A.I. to train to see resulting price distribution chart.
 0.0
 1
 
+MONITOR
+500
+263
+557
+308
+sprd
+min [ offer ] of dealers - max [ bid ] of dealers
+3
+1
+11
+
 @#$#@#$#@
 ## WHAT IS IT?
 
@@ -935,6 +960,8 @@ Clicking the go button within the view will begin the model. Initially, notice t
 The user will have to wait until the A.I. is fully trained before price movements are illustrated on the histrogram, which will be indicated by the A.I. Status monitor in the view. Notice if the price changes is normally distributed or not. The kurtosis of the distribution is displayed with the histrogram, and a kurtosis above 3 implies a fat-tailed distribution.
 
 Notice that configurations with relatively few dealers result in fat-tailed price changes. Conversely, increasing the number of dealers results in more normally-distributed price changes.
+
+Notice how the commission within the market (the difference between the most competitive offer price and the most competitive bid price) varies over time, and how it is always below the fixed bid offer.
 
 ## Set-up Instructions
 

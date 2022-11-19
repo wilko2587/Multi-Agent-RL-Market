@@ -2,80 +2,25 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="74419b36-75de-4c25-99af-34ab70d4a016" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/Market Model 1.pdf" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Multi_agent_model_of_stock_returns.pdf" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/__pycache__/deepQlearn.cpython-37.pyc" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/__pycache__/deepQlearnV2.cpython-37.pyc" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/misc/Arb copy.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/misc/Arb.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/misc/Color1.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/misc/Color2.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/misc/Color3.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/misc/Color4 copy.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/misc/Color4.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/misc/DealerVolvKurtosis.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/misc/Eg.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/misc/Figure_1.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/misc/KurtosisSmartVol.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/misc/KurtosisVai.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/misc/crash.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/misc/dealerPosSkew.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/misc/fragmetation_mean.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/misc/histogram.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/misc/reversionAroundMean.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/misc/reversionBW.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/misc/technicals.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/misc/zipf.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/Color1.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/DeepQFinancialMarket Kurtosis-vs-smartVolume-spreadsheet copy.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/DeepQFinancialMarket Kurtosis-vs-smartVolume-spreadsheet.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/DeepQFinancialMarket Kurtosis-vs-smartVolume-spreadsheet.numbers" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/DeepQFinancialMarket Kurtosis_vs_SmartVolume-spreadsheet.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/DeepQFinancialMarket copy Price.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/DeepQFinancialMarket copy getvolatility-spreadsheet.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/DeepQFinancialMarket dealerPosition-vs-skew-spreadsheet copy.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/DeepQFinancialMarket dealerPosition-vs-skew-spreadsheet.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/DeepQFinancialMarket dealerPosition-vs-skew-spreadsheet.numbers" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/MarketCrash.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/MarketPricesmean109_disparity20.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/bid-offer.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/bidoffer_fragmentation0.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/bidoffer_fragmentation1.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/bidoffer_fragmentation2.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/bidoffer_fragmentation3.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/bidoffer_fragmentation4.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/bidoffer_fragmentation5.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/bidoffer_fragmentation6.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/bidoffer_fragmentation7.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/bidoffer_fragmentation_save.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/divergence_vs_volume.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/fragmentation-mean.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/plot_KurtosisSmartVol.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/plot_SkewDealerPos.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/plot_bidoffer.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/plot_fragmentationMean.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/plot_histogram.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/plot_marketcrash.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/plot_meanoscillations.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/plot_phasechange.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/plot_powerlaw.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/plot_powertail.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/returns_market_fragmentation.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/returns_market_fragmentation0.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/returns_market_fragmentation1.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/returns_market_fragmentation2.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/returns_market_fragmentation3.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/returns_market_fragmentation4.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/returns_market_fragmentation_save.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/returns_multi.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/returns_multirun_basic.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/returns_w0_smart.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/results/returns_w_smart.csv" beforeDir="false" />
+      <change afterPath="$PROJECT_DIR$/plot_curves.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.Financial OTC Market.tmp.nlogo" beforeDir="false" afterPath="$PROJECT_DIR$/.Financial OTC Market.tmp.nlogo" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/Multi-Agent-RL-Market.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/Multi-Agent-RL-Market.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Financial OTC Market.nlogo" beforeDir="false" afterPath="$PROJECT_DIR$/Financial OTC Market.nlogo" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/deepQlearn.py" beforeDir="false" afterPath="$PROJECT_DIR$/deepQlearn.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Python Script" />
+      </list>
+    </option>
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -89,6 +34,53 @@
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
+  </component>
+  <component name="RunManager" selected="Python.plot_curves">
+    <configuration name="deepQlearn" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="Multi-Agent-RL-Market" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/deepQlearn.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="plot_curves" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="Multi-Agent-RL-Market" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/plot_curves.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Python.plot_curves" />
+        <item itemvalue="Python.deepQlearn" />
+      </list>
+    </recent_temporary>
   </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
@@ -99,10 +91,37 @@
       <option name="presentableId" value="Default" />
       <updated>1665968149733</updated>
       <workItem from="1665968151222" duration="640000" />
+      <workItem from="1668797216375" duration="4699000" />
+      <workItem from="1668811287536" duration="23021000" />
     </task>
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/deepQlearn.py</url>
+          <line>74</line>
+          <option name="timeStamp" value="1" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
+  </component>
+  <component name="com.intellij.coverage.CoverageDataManagerImpl">
+    <SUITE FILE_PATH="coverage/deepQlearn_py$plot_curves.coverage" NAME="plot_curves Coverage Results" MODIFIED="1668830010617" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>
