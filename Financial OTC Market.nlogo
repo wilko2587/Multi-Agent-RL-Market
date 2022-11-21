@@ -17,8 +17,6 @@ to setup ; global procedure
 
   clear-all
 
-  random-seed 1
-
   set obs-length 512 ; length of price history used to train the smart valueinvestors RL. Keep at 500.
   set a 0.015 ; constant determining how much bid-offer increases as size increases. Model parameter
 
@@ -352,9 +350,9 @@ to initialise-smartinvestors ; global procedure
 
     py:set "params" []
     py:set "id" who
-    py:set "lr" 5e-5
+    py:set "lr" 1e-3
     py:set "state_size" obs-length
-    py:set "eps_decay" 0.999
+    py:set "eps_decay" 0.995
     py:run "agents[id] = q.SmartTrader(lr, state_size, eps_decay=eps_decay, batch_size=128)"
 
     set trade-holding-times []
@@ -923,6 +921,24 @@ Wait for the A.I. to train to see resulting price distribution chart.
 11
 0.0
 1
+
+PLOT
+777
+20
+1149
+140
+smart-investor profit
+NIL
+NIL
+0.0
+10.0
+0.0
+10.0
+true
+false
+"" ""
+PENS
+"default" 1.0 0 -16777216 true "" "plot smartinvestor-rewards"
 
 @#$#@#$#@
 ## WHAT IS IT?

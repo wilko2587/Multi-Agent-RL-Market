@@ -76,7 +76,7 @@ class FFnet(nn.Module):
         self.activation3 = activation()
         self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
         self.to(self.device)
-        self.scheduler = MultiStepLR(self.optimizer, milestones=[2000, 4000], gamma=0.1)
+        self.scheduler = MultiStepLR(self.optimizer, milestones=[200, 500], gamma=0.1)
 
         self.loss_curve = [] # initialise container to keep track of training loss
         print(summary(self, (1, 512)))
