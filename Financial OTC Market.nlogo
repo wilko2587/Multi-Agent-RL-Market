@@ -17,8 +17,10 @@ to setup ; global procedure
 
   clear-all
 
+  random-seed 1
+
   set obs-length 512 ; length of price history used to train the smart valueinvestors RL. Keep at 500.
-  set a 0.1 ; constant determining how much bid-offer increases as size increases. Model parameter
+  set a 0.015 ; constant determining how much bid-offer increases as size increases. Model parameter
 
   setup-python
   initialise-dealers
@@ -126,7 +128,7 @@ to update-graphics ; global procedure
     let eps_dec py:runresult "sum([agents[a].epsilon_decay for a in agents])/len(agents)"
     let rate -1 * log (1 - eps_dec ) 2.71
     let pct_complete  ( exp ( ( ( 1 - eps_mean ) / ( 1 - eps_min ) ) - 1 ) * 100  - 37 ) / ( 1 - 0.37 )
-    set ai-trained-str ( word "A.I. Training " ( round pct_complete ) "%" )
+    set ai-trained-str ( word "A.I. Training " ( max list 0 floor pct_complete ) "%" )
   ]
 
 end
@@ -161,20 +163,16 @@ end
 
 
 to dealer-act ; dealer procedure
-  let trade_size min list ( trade-size-cap ) ( abs ( inventory - dealer-position-limit ) )
-  if inventory < 0 [
+  let trade_size min list ( trade-size-cap ) ( abs ( inventory ) )
+  if inventory < -1 * dealer-position-limit [
     let bestdealer max-one-of link-neighbors with [ breed = dealers ] [ inventory ]
     ;set trade_size min list ( trade_size ) ( [ inventory ] of bestdealer ) ; dealers will only trade to make themselves flatter
-    if trade_size > 0 [
-      transact "buy" trade_size [ who ] of bestdealer true
-    ]
+    transact "buy" trade_size [ who ] of bestdealer false
   ]
-  if inventory > 0 [
+  if inventory > dealer-position-limit [
     let bestdealer min-one-of link-neighbors with [ breed = dealers ] [ inventory ]
     ;set trade_size min list ( trade_size ) ( -1 * [ inventory ] of bestdealer ) ; dealers will only trade to make themselves flatter
-    if trade_size > 0 [
-      transact "sell" trade_size [ who ] of bestdealer true
-    ]
+    transact "sell" trade_size [ who ] of bestdealer false
   ]
 end
 
@@ -192,23 +190,25 @@ to smartinvestor-act ; smart-investor procedure
     let action_index item index actions_index
     let ptransaction-price ( item index transaction-prices )
     let _position ( item index positions )
-    if _position > 0 [
+    if _position > 0 [ ; if position > 0, then trade we're closing was a "buy". so we need to sell to reverse out.
       let bestdealer [ who ] of min-one-of link-neighbors with [ breed = dealers ] [ inventory ]
-      transact "sell" _position bestdealer false
+      transact "sell" abs ( _position ) bestdealer false
     ]
     if _position < 0 [
       let bestdealer [ who ] of max-one-of link-neighbors with [ breed = dealers ] [ inventory ]
-      transact "buy" -1 * _position bestdealer false
+      transact "buy" abs( _position ) bestdealer false
     ]
 
     set bidofferpaid bidofferpaid + bid-offer
 
     py:set "state" ( item index state-memory )
     py:set "next_state" recent-price-history
-    py:set "reward" _position * ( ctransaction-price - ptransaction-price )  ; exclude the commission from the reward here if wanted... simple addition should do.
+    let reward _position * ( ctransaction-price - ptransaction-price ) / ( ptransaction-price )
+    py:set "reward" reward
     py:set "action" action_index
-    py:run "agents[id].remember(state, action, next_state, reward)"
-    py:run "agents[id].learn()"
+    if length ( item index state-memory ) = 512 [
+      py:run "agents[id].remember(state, action, next_state, reward)"
+    ]
 
     ; finally, remove storage of the trade which is now closed
     set positions remove-item index positions
@@ -228,13 +228,9 @@ to smartinvestor-act ; smart-investor procedure
     let trade_time item 2 act_list
 
     set state-memory lput recent-price-history state-memory ; save the state associated with the action
-    ifelse buy_sell != "do nothing" [
-      set trade-holding-times lput ( ticks + trade_time ) trade-holding-times ; add a new counter to the list
-    ][
-      set trade-holding-times lput ( ticks ) trade-holding-times
-    ]
-    set actions_index lput action actions_index
+    set trade-holding-times lput ( ticks + trade_time ) trade-holding-times ; add a new counter to the list
 
+    set actions_index lput action actions_index
     if buy_sell = "buy" [
       let bestdealer [ who ] of max-one-of link-neighbors with [ breed = dealers ] [ inventory ]
       transact "buy" trade_size bestdealer true
@@ -244,7 +240,7 @@ to smartinvestor-act ; smart-investor procedure
         transact "sell" trade_size bestdealer true
     ]
     if buy_sell = "do nothing" [
-      set transaction-prices lput 0 transaction-prices ; this is a "do nothing" transaction, reward will be zero so transaction_price doesn't matter
+      set transaction-prices lput 100 transaction-prices ; this is a "do nothing" transaction, reward will be zero so transaction_price doesn't matter
       set positions lput 0 positions
     ]
   ]
@@ -253,8 +249,8 @@ end
 
 to valueinvestor-act ; value-investor procedure
 
-  let best_advertised_bid [ bid ] of max-one-of ( link-neighbors with [ breed = dealers ] ) [ bid ] ; best bid in the market
-  let best_advertised_offer [ offer ] of min-one-of ( link-neighbors with [ breed = dealers ] ) [ offer ] ; best offer in the market
+  let best_advertised_bid [ bid ] of min-one-of ( link-neighbors with [ breed = dealers ] ) [ inventory ] ; best bid in the market
+  let best_advertised_offer [ offer ] of max-one-of ( link-neighbors with [ breed = dealers ] ) [ inventory ] ; best offer in the market
 
   let gain-from-buy ( expectation - best_advertised_offer )
   let gain-from-sell ( best_advertised_bid - expectation )
@@ -263,9 +259,8 @@ to valueinvestor-act ; value-investor procedure
   if ( best_advertised_bid > expectation ) and ( gain-from-buy < gain-from-sell ) [ ; if the price is real, and higher than expectation, sell
     let bestdealer max-one-of link-neighbors with [ breed = dealers ] [ -1 * inventory ] ; naturally, this will select the dealer with most room
     let bestbid [ bid ] of bestdealer
-    let tradesize max list ( 0 ) ( inventory ) ; if positioned wrong way, we want to close out the position AND put on a trade
     ; if valueinvestoris not selling because of inventory limits, then act as normal. Else, trade to get within limits again
-    set tradesize min list ( trade-size-cap ) ( tradesize + ( bestbid - expectation ) )
+    let tradesize min list ( trade-size-cap ) ( ( bestbid - expectation ) / 5 )
     transact "sell" tradesize [ who ] of bestdealer false
   ]
 
@@ -273,8 +268,7 @@ to valueinvestor-act ; value-investor procedure
   if ( best_advertised_offer < expectation ) and ( gain-from-sell < gain-from-buy ) [ ; if the price is real, and lower than expectation, buy
     let bestdealer max-one-of link-neighbors with [ breed = dealers ] [ inventory ] ; naturally, this will select the dealer with most room
     let bestoffer [ offer ] of bestdealer
-    let tradesize max list ( 0 ) ( -1 * inventory ) ; if positioned wrong way, we want to close out the position AND put on a trade
-    set tradesize min list ( trade-size-cap ) ( tradesize + ( expectation - bestoffer ) )
+    let tradesize min list ( trade-size-cap ) ( ( expectation - bestoffer ) / 5 )
 
     transact "buy" tradesize [ who ] of bestdealer false
   ]
@@ -298,22 +292,25 @@ to transact [ direction tradesize counterpartyID record ] ; turtle procedure
   let max-natural-size 0 ; initialise
   ifelse direction = "sell" [
     set bestpx [ bid ] of counterparty
-    set max-natural-size  max list ( 0 ) ( [ dealer-position-limit + factor * inventory ] of counterparty ) ; amount of room the dealer can transact without breeching limits
+    ;set max-natural-size  max list ( 0 ) ( [ dealer-position-limit + factor * inventory ] of counterparty ) ; amount of room the dealer can transact without breeching limits
+    set max-natural-size tradesize
   ][
     set bestpx [ offer ] of counterparty
-    set max-natural-size  max list ( 0 ) ( [ dealer-position-limit + factor * inventory ] of counterparty ) ; amount of room the dealer can transact without breeching limits
+    ;set max-natural-size  max list ( 0 ) ( [ dealer-position-limit + factor * inventory ] of counterparty ) ; amount of room the dealer can transact without breeching limits
+    set max-natural-size tradesize
   ]
 
-  let excess-size max list (0) ( tradesize - max-natural-size )
-  let excesspx bestpx + factor * sensitivity-function ( excess-size ) ; The price the dealer will take the *excess* size above and beyond their limit
-  let size-adj-px ( ( bestpx * min list tradesize max-natural-size ) + ( excesspx * excess-size ) ) / tradesize ; weighted mean of the natural and excess prices
+  ;let excess-size max list (0) ( tradesize - max-natural-size )
+  ;let excesspx bestpx + factor * sensitivity-function ( excess-size ) ; The price the dealer will take the *excess* size above and beyond their limit
+  ;let size-adj-px ( ( bestpx * min list tradesize max-natural-size ) + ( excesspx * excess-size ) ) / tradesize ; weighted mean of the natural and excess prices
+  let size-adj-px bestpx - sensitivity-function ( [ inventory - factor * tradesize ] of counterparty - tradesize )
 
   if ( breed = smartinvestors ) [ ; NB: this would be nicer inside smartinvestor-act procedure, but it requires knowing size-adj-px so this is not an option.
     ifelse length trade-holding-times > 0 and min trade-holding-times <= ticks [ ; if it was an old trade being closed, remove the trade stats from the traders memory
       set ctransaction-price size-adj-px
       ][ ; else create a new part in the memory
       if record [
-        set positions lput ( tradesize ) positions
+        set positions lput ( factor * tradesize ) positions
         set transaction-prices lput size-adj-px transaction-prices
       ];
     ]
@@ -355,11 +352,10 @@ to initialise-smartinvestors ; global procedure
 
     py:set "params" []
     py:set "id" who
-    py:set "lr" 1e-4
+    py:set "lr" 5e-5
     py:set "state_size" obs-length
     py:set "eps_decay" 0.999
-    py:set "trade_size" trade-size-cap
-    py:run "agents[id] = q.SmartTrader(lr, state_size, eps_decay=eps_decay, batch_size=32, trade_size=trade_size)"
+    py:run "agents[id] = q.SmartTrader(lr, state_size, eps_decay=eps_decay, batch_size=128)"
 
     set trade-holding-times []
     set positions []
@@ -505,7 +501,7 @@ to-report rollingVol [ period return_period ]
 end
 
 to-report sensitivity-function [ x ]
-  report a * x ; linear
+  report a * x  ; linear
 end
 
 to-report smartinvestor-rewards
@@ -539,10 +535,10 @@ to update-histogram; plot procedure
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
-814
-143
-1188
-518
+776
+146
+1150
+521
 -1
 -1
 11.1
@@ -598,10 +594,10 @@ NIL
 1
 
 MONITOR
-416
-264
-483
-309
+427
+265
+494
+310
 live offer
 best-offer
 2
@@ -609,10 +605,10 @@ best-offer
 11
 
 MONITOR
-342
-263
-407
-308
+353
+264
+418
+309
 live bid
 best-bid
 2
@@ -681,7 +677,7 @@ bid-offer
 bid-offer
 0
 2
-0.9
+0.5
 0.1
 1
 NIL
@@ -696,7 +692,7 @@ dealer-position-limit
 dealer-position-limit
 0
 100
-10.0
+20.0
 1
 1
 NIL
@@ -730,16 +726,16 @@ n-dealers
 n-dealers
 2
 20
-7.0
+10.0
 1
 1
 NIL
 HORIZONTAL
 
 BUTTON
-261
+263
 153
-375
+377
 186
 Market Crash
 move-market
@@ -898,10 +894,10 @@ enable-broker-market?
 -1000
 
 MONITOR
-602
-263
-719
-308
+548
+264
+665
+309
 A.I. status
 ai-trained-str
 17
@@ -922,22 +918,11 @@ TEXTBOX
 507
 32
 689
-128
+59
 Wait for the A.I. to train to see resulting price distribution chart.
 11
 0.0
 1
-
-MONITOR
-500
-263
-557
-308
-sprd
-min [ offer ] of dealers - max [ bid ] of dealers
-3
-1
-11
 
 @#$#@#$#@
 ## WHAT IS IT?
