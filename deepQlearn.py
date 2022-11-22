@@ -76,7 +76,7 @@ class FFnet(nn.Module):
         self.activation3 = activation()
         self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
         self.to(self.device)
-        self.scheduler = MultiStepLR(self.optimizer, milestones=[200, 500], gamma=0.1)
+        self.scheduler = MultiStepLR(self.optimizer, milestones=[300, 500, 700, 900], gamma=0.1)
 
         self.loss_curve = [] # initialise container to keep track of training loss
         print(summary(self, (1, 512)))
@@ -120,7 +120,7 @@ class FFnet(nn.Module):
 
 class SmartTrader:
     def __init__(self, lr, state_size, eps_decay = 0.99, batch_size=32,
-                 fc2_dims=8, fc3_dims=8, confidence_epsilon_thresh=0.05,
+                 fc2_dims=8, fc3_dims=8, confidence_epsilon_thresh=0.01,
                  gamma = 0.99):
 
         self.state_size = int(state_size)
@@ -154,9 +154,12 @@ class SmartTrader:
 
         self.experience = 0
         self.totalreward = 0
+        self.totalrewards = [self.totalreward]
         self.confident = False # bool to turn True when epsilon is low enough
         self.confidence_epsilon_thresh = confidence_epsilon_thresh
         self.counter = 0
+        self.epsilons = []
+        self.extra_counter = 0
 
         # create main model
         self.model = FFnet(lr, fc2_dims, fc3_dims, self.action_size)
@@ -165,13 +168,18 @@ class SmartTrader:
     def remember(self, state, action, next_state, reward):
 
         self.totalreward += reward  # tracker to keep hold of rewards resulting from intentional actions
+        self.totalrewards.append(self.totalrewards[-1] + reward)
+        self.epsilons.append(self.epsilon)
         if len(state) == self.state_size:
             self.memory.append((state, action, next_state, reward))
 
             if self.epsilon < self.confidence_epsilon_thresh:
-                if self.confident==False:
-                    pd.Series(self.model.loss_curve).to_csv('{}.csv'.format(NNN()))
+                if self.confident==False and self.extra_counter == 1:
+                    N = NNN()
+                    pd.Series(self.totalrewards).to_csv('{}.csv'.format(N))
+                    pd.Series(self.epsilons).to_csv('e{}.csv'.format(N))
                     self.confident = True
+                self.extra_counter += 1
             if len(self.memory) > self.batch_size:
                 if self.epsilon >= self.confidence_epsilon_thresh:
                     self.epsilon *= self.epsilon_decay

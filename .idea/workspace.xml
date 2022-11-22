@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="74419b36-75de-4c25-99af-34ab70d4a016" name="Changes" comment="convergence time down to ~1-2mins">
+    <list default="true" id="74419b36-75de-4c25-99af-34ab70d4a016" name="Changes" comment="updated transaction prices between value investors and market makers to solve the sim equations">
+      <change beforePath="$PROJECT_DIR$/.idea/.name" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.name" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Financial OTC Market.nlogo" beforeDir="false" afterPath="$PROJECT_DIR$/Financial OTC Market.nlogo" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/__pycache__/deepQlearn.cpython-39.pyc" beforeDir="false" afterPath="$PROJECT_DIR$/__pycache__/deepQlearn.cpython-39.pyc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/deepQlearn.py" beforeDir="false" afterPath="$PROJECT_DIR$/deepQlearn.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/plot_curves.py" beforeDir="false" afterPath="$PROJECT_DIR$/plot_curves.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -105,6 +108,7 @@
       <workItem from="1668844751540" duration="26800000" />
       <workItem from="1668905043098" duration="50937000" />
       <workItem from="1669064850412" duration="4441000" />
+      <workItem from="1669086691316" duration="9858000" />
     </task>
     <task id="LOCAL-00001" summary="RL training and converging">
       <created>1669057915519</created>
@@ -120,7 +124,14 @@
       <option name="project" value="LOCAL" />
       <updated>1669070174795</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="updated transaction prices between value investors and market makers to solve the sim equations">
+      <created>1669086725734</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1669086725734</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -141,7 +152,8 @@
   <component name="VcsManagerConfiguration">
     <MESSAGE value="RL training and converging" />
     <MESSAGE value="convergence time down to ~1-2mins" />
-    <option name="LAST_COMMIT_MESSAGE" value="convergence time down to ~1-2mins" />
+    <MESSAGE value="updated transaction prices between value investors and market makers to solve the sim equations" />
+    <option name="LAST_COMMIT_MESSAGE" value="updated transaction prices between value investors and market makers to solve the sim equations" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/deepQlearn_py$plot_curves.coverage" NAME="plot_curves Coverage Results" MODIFIED="1668830010617" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />

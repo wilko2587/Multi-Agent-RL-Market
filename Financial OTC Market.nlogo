@@ -18,7 +18,7 @@ to setup ; global procedure
   clear-all
 
   set obs-length 512 ; length of price history used to train the smart valueinvestors RL. Keep at 500.
-  set a 0.00001 ; constant determining how much bid-offer increases as size increases. Model parameter
+  set a 0.01 ; constant determining how much bid-offer increases as size increases. Model parameter
 
   setup-python
   initialise-dealers
@@ -133,7 +133,7 @@ end
 
 
 to record-returns ; global procedure
-    if ( ticks mod 50 ) = 0 and not any? smartinvestors with [ not confident? ] [ ; record the price changes every 50 ticks
+    if ( ticks mod 25 ) = 0 and not any? smartinvestors with [ not confident? ] [ ; record the price changes every 50 ticks
     set p1 price-level
     set returns lput (p1 - p0) returns
     set p0 p1
@@ -152,8 +152,7 @@ end
 
 
 to refresh-bidoffer ; dealer procedure
-  let axe-adj a * sensitivity-function ( -1 * inventory  )
-  set expectation last-trade + axe-adj
+  set expectation last-trade
 
   set offer ( expectation + bid-offer / 2 )
   set bid ( expectation - bid-offer / 2 )
@@ -255,7 +254,7 @@ to valueinvestor-act ; value-investor procedure
 
   ;; 1) Sell
   if ( best_advertised_bid > expectation ) and ( gain-from-buy < gain-from-sell ) [ ; if the price is real, and higher than expectation, sell
-    let bestdealer max-one-of link-neighbors with [ breed = dealers ] [ -1 * inventory ] ; naturally, this will select the dealer with most room
+    let bestdealer min-one-of link-neighbors with [ breed = dealers ] [ inventory ] ; naturally, this will select the dealer with most room
     let bestbid [ bid ] of bestdealer
     ; if valueinvestoris not selling because of inventory limits, then act as normal. Else, trade to get within limits again
     let tradesize min list ( trade-size-cap ) ( ( bestbid - expectation ) / 5 )
@@ -355,7 +354,7 @@ to initialise-smartinvestors ; global procedure
     py:set "id" who
     py:set "lr" 1e-3
     py:set "state_size" obs-length
-    py:set "eps_decay" 0.995
+    py:set "eps_decay" 0.993
     py:run "agents[id] = q.SmartTrader(lr, state_size, eps_decay=eps_decay, batch_size=128)"
 
     set trade-holding-times []
@@ -536,10 +535,10 @@ to update-histogram; plot procedure
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
-776
-346
-1150
-721
+778
+145
+1152
+520
 -1
 -1
 11.1
@@ -571,7 +570,7 @@ n-value-investors
 n-value-investors
 0
 40
-10.0
+20.0
 1
 1
 NIL
@@ -677,8 +676,8 @@ SLIDER
 bid-offer
 bid-offer
 0
-2
-0.7
+5
+0.4
 0.1
 1
 NIL
@@ -705,7 +704,7 @@ PLOT
 740
 239
 Realised Return
-50 tick change
+25 tick change
 Count
 -10.0
 10.0
@@ -821,7 +820,7 @@ market-disparity
 market-disparity
 0
 20
-20.0
+10.0
 1
 1
 NIL
@@ -926,11 +925,11 @@ Wait for the A.I. to train to see resulting price distribution chart.
 1
 
 PLOT
-777
-20
-1351
-285
-smart-investor profit
+773
+23
+1176
+173
+smartinvestor profit
 NIL
 NIL
 0.0
