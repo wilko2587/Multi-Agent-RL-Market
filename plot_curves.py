@@ -28,7 +28,7 @@ sns.lineplot(data=results, x='episode', y='Mean Squared Error of Q-Prediction',
              err_kws={"alpha": 0.0},
              alpha=1)
 
-#axs.set_yscale('log')
+axs.set_yscale('log')
 plt.legend(loc='upper right')
 
 xlabels = [int(float(i.get_text())) for i in axs.get_xticklabels()[1:]]

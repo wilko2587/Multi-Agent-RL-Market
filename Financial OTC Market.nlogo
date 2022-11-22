@@ -18,7 +18,7 @@ to setup ; global procedure
   clear-all
 
   set obs-length 512 ; length of price history used to train the smart valueinvestors RL. Keep at 500.
-  set a 0.015 ; constant determining how much bid-offer increases as size increases. Model parameter
+  set a 0.00001 ; constant determining how much bid-offer increases as size increases. Model parameter
 
   setup-python
   initialise-dealers
@@ -267,7 +267,6 @@ to valueinvestor-act ; value-investor procedure
     let bestdealer max-one-of link-neighbors with [ breed = dealers ] [ inventory ] ; naturally, this will select the dealer with most room
     let bestoffer [ offer ] of bestdealer
     let tradesize min list ( trade-size-cap ) ( ( expectation - bestoffer ) / 5 )
-
     transact "buy" tradesize [ who ] of bestdealer false
   ]
 
@@ -276,6 +275,7 @@ end
 
 to transact [ direction tradesize counterpartyID record ] ; turtle procedure
 
+  set tradesize abs ( tradesize )
   let factor 1 ;initialise
   let counterparty 0 ; initialise
   ifelse direction = "buy" [
@@ -290,37 +290,40 @@ to transact [ direction tradesize counterpartyID record ] ; turtle procedure
   let max-natural-size 0 ; initialise
   ifelse direction = "sell" [
     set bestpx [ bid ] of counterparty
-    ;set max-natural-size  max list ( 0 ) ( [ dealer-position-limit + factor * inventory ] of counterparty ) ; amount of room the dealer can transact without breeching limits
-    set max-natural-size tradesize
   ][
     set bestpx [ offer ] of counterparty
-    ;set max-natural-size  max list ( 0 ) ( [ dealer-position-limit + factor * inventory ] of counterparty ) ; amount of room the dealer can transact without breeching limits
-    set max-natural-size tradesize
   ]
 
-  ;let excess-size max list (0) ( tradesize - max-natural-size )
-  ;let excesspx bestpx + factor * sensitivity-function ( excess-size ) ; The price the dealer will take the *excess* size above and beyond their limit
-  ;let size-adj-px ( ( bestpx * min list tradesize max-natural-size ) + ( excesspx * excess-size ) ) / tradesize ; weighted mean of the natural and excess prices
-  let size-adj-px bestpx - sensitivity-function ( [ inventory - factor * tradesize ] of counterparty - tradesize )
+  let final-px 100 ; initialise
+  let final-size 0 ; initialise
+  ifelse ( breed = valueinvestors ) [
+    set final-px bestpx - a * ( [ inventory + expectation / 5 ] of one-of dealers with [ who = counterpartyID ] ) * 1. / ( 1 +  a / 5 )
+    set final-size abs ( 0.2 * ( expectation - final-px ) )
+  ][
+    set final-px bestpx - a * [ inventory + ( factor * tradesize ) ] of one-of dealers with [ who = counterpartyID ]
+    set final-size abs ( tradesize )
+]
+  ;let final-px bestpx - sensitivity-function ( [ inventory - factor * tradesize ] of counterparty - tradesize )
+  ;let final-size tradesize
 
   if ( breed = smartinvestors ) [ ; NB: this would be nicer inside smartinvestor-act procedure, but it requires knowing size-adj-px so this is not an option.
     ifelse length trade-holding-times > 0 and min trade-holding-times <= ticks [ ; if it was an old trade being closed, remove the trade stats from the traders memory
-      set ctransaction-price size-adj-px
+      set ctransaction-price final-px
       ][ ; else create a new part in the memory
       if record [
-        set positions lput ( factor * tradesize ) positions
-        set transaction-prices lput size-adj-px transaction-prices
+        set positions lput ( factor * final-size ) positions
+        set transaction-prices lput final-px transaction-prices
       ];
     ]
   ]
 
-  set inventory inventory + factor * tradesize
+  set inventory inventory + factor * final-size
   ask dealers with [ in-link-neighbor? counterparty ] [
-    set last-trade size-adj-px
+    set last-trade final-px
   ]
   ask counterparty [
-    set last-trade size-adj-px
-    set inventory inventory - factor * tradesize
+    set last-trade final-px
+    set inventory inventory - factor * final-size
   ]
 
   ask my-links with [ end1 = counterparty ] [
@@ -534,9 +537,9 @@ end
 @#$#@#$#@
 GRAPHICS-WINDOW
 776
-146
+346
 1150
-521
+721
 -1
 -1
 11.1
@@ -675,7 +678,7 @@ bid-offer
 bid-offer
 0
 2
-0.5
+0.7
 0.1
 1
 NIL
@@ -690,7 +693,7 @@ dealer-position-limit
 dealer-position-limit
 0
 100
-20.0
+50.0
 1
 1
 NIL
@@ -925,8 +928,8 @@ Wait for the A.I. to train to see resulting price distribution chart.
 PLOT
 777
 20
-1149
-140
+1351
+285
 smart-investor profit
 NIL
 NIL
