@@ -1,16 +1,16 @@
 extensions [ py ]
 
-globals [ a returns p0 p1 price-history histogram-num-bars obs-length bidofferpaid ai-trained-str]
+globals [ a returns p0 p1 price-history histogram-num-bars obs-length bidofferpaid ai-trained-str arb ]
 
 breed [ valueinvestors valueinvestor ]
-breed [ smartinvestors smartinvestor ]
+breed [ trendinvestors trendinvestor ]
 breed [ dealers dealer ]
 
 turtles-own [ expectation inventory ]
 links-own [ weight ] ; weight will represent the size of trade between two parties for visual illustration
-dealers-own [ bid offer last-trade ] ; bid and offer prices
+dealers-own [ bid offer last-trade mid-history ] ; bid and offer prices
 valueinvestors-own [ uncertainty ]
-smartinvestors-own [ confident? trade-holding-times state-memory positions transaction-prices ctransaction-price recent-price-history actions_index ]
+trendinvestors-own [ confident? trade-holding-times state-memory positions transaction-prices ctransaction-price recent-price-history actions_index ]
 
 
 to setup ; global procedure
@@ -18,12 +18,12 @@ to setup ; global procedure
   clear-all
 
   set obs-length 512 ; length of price history used to train the smart valueinvestors RL. Keep at 500.
-  set a 0.01 ; constant determining how much bid-offer increases as size increases. Model parameter
+  set a 0.001 ; constant determining how much bid-offer increases as size increases. Model parameter, try altering!
 
   setup-python
   initialise-dealers
   initialise-valueinvestors
-  initialise-smartinvestors
+  initialise-trendinvestors
 
   ask links [ ; three boundary criteria: a turtle cannot have less than one connection to another dealer
     if weight > prob-of-link and count ( [ link-neighbors with [ breed = dealers ] ] of end2  ) > 1 and count ( [ link-neighbors with [ breed = dealers ] ] of end1 ) > 1 [
@@ -32,6 +32,7 @@ to setup ; global procedure
     set color grey - 3
   ]
 
+  set arb 0
   set p0 price-level ; cache the price level
   set returns [] ; list for recording the returns
   set price-history []
@@ -60,12 +61,12 @@ end
 to go ; global procedure
 
   ; 1) get an investor at random to act
-  ask one-of turtles [
+  ask one-of turtles with [ ( breed = valueinvestors ) or ( breed = trendinvestors ) or ( ( breed = dealers ) and ( abs ( inventory ) > dealer-position-limit ) and enable-broker-market?) ] [
     if breed = valueinvestors [
       valueinvestor-act
     ]
-    if breed = smartinvestors [
-      smartinvestor-act
+    if breed = trendinvestors [
+      trendinvestor-act
     ]
     if ( breed = dealers ) and ( abs ( inventory ) > dealer-position-limit ) and enable-broker-market? [ ;
       dealer-act
@@ -73,10 +74,11 @@ to go ; global procedure
   ]
 
   ; 2) refresh prices
+  ;show " "
   step
-  record-returns
   update-graphics
   update-pricehistory
+  record-returns
 
   tick
 
@@ -85,7 +87,7 @@ end
 
 to update-pricehistory ; global procedure
   set price-history lput mean [ expectation ] of dealers price-history
-  ask smartinvestors [
+  ask trendinvestors [
     set recent-price-history lput ( mean [ expectation ] of link-neighbors with [ breed = dealers ] - 100 ) recent-price-history ; -100 to make neural network inputs closer to 0
     if length recent-price-history > obs-length [
       set recent-price-history remove-item 0 recent-price-history ; keep the recent price history a fixed length
@@ -118,7 +120,7 @@ to update-graphics ; global procedure
     ]
 
   ; set the ai-train-str to update if the AI has trained yet or not
-  ifelse not any? smartinvestors with [ not confident? ] [
+  ifelse not any? trendinvestors with [ not confident? ] [
     set ai-trained-str "A.I. live!"
   ][
     let eps_mean py:runresult "sum([agents[a].epsilon for a in agents])/len(agents)"
@@ -128,16 +130,26 @@ to update-graphics ; global procedure
     let pct_complete  ( exp ( ( ( 1 - eps_mean ) / ( 1 - eps_min ) ) - 1 ) * 100  - 37 ) / ( 1 - 0.37 )
     set ai-trained-str ( word "A.I. Training " ( max list 0 floor pct_complete ) "%" )
   ]
+  ;
+  ;]
+    ; py:run "[agents[a].save_model('model{}.pt'.format(a)) for a in agents]"
 
 end
 
 
 to record-returns ; global procedure
-    if ( ticks mod 25 ) = 0 and not any? smartinvestors with [ not confident? ] [ ; record the price changes every 50 ticks
-    set p1 price-level
-    set returns lput (p1 - p0) returns
-    set p0 p1
-  ]
+    if ( ticks mod 25 ) = 0 and not any? trendinvestors with [ not confident? ] [ ; record the price changes every 25 ticks
+      ask dealers [
+        let last_px item ( ( length mid-history ) - 1 ) mid-history
+        let orig_px item ( ( length mid-history ) - 25 ) mid-history
+        set returns lput ( (last_px - orig_px) / orig_px ) returns
+      ]
+    ]
+    if ( ticks mod 100 ) = 0 [
+        let bestbid max [ bid ] of dealers
+        let bestoffer min [ offer ] of dealers
+        set arb ( bestbid - bestoffer )
+    ]
 end
 
 
@@ -152,29 +164,39 @@ end
 
 
 to refresh-bidoffer ; dealer procedure
-  set expectation last-trade
-
+  set expectation last-trade - a * inventory
+  ;show sentence expectation inventory
+  set mid-history lput expectation mid-history
   set offer ( expectation + bid-offer / 2 )
   set bid ( expectation - bid-offer / 2 )
 end
 
 
 to dealer-act ; dealer procedure
-  let trade_size min list ( trade-size-cap ) ( abs ( inventory ) )
+  ;let trade_size min list ( trade-size-cap ) ( abs ( inventory ) )
+  let trade_size abs inventory
+  let mywho who
   if inventory < -1 * dealer-position-limit [
-    let bestdealer max-one-of link-neighbors with [ breed = dealers ] [ inventory ]
-    ;set trade_size min list ( trade_size ) ( [ inventory ] of bestdealer ) ; dealers will only trade to make themselves flatter
+    let bestdealer max-one-of link-neighbors with [ ( breed = dealers ) and ( who != mywho ) ] [ inventory ]
+    py:set "mywho" mywho
+    py:set "size" trade_size
+    py:set "bestdealer" [ who ] of bestdealer
+    ;py:run("print('dealer {} buys {} from {}'.format(mywho, size, bestdealer))")
     transact "buy" trade_size [ who ] of bestdealer false
   ]
   if inventory > dealer-position-limit [
-    let bestdealer min-one-of link-neighbors with [ breed = dealers ] [ inventory ]
+    let bestdealer min-one-of link-neighbors with [ ( breed = dealers ) and ( who != mywho ) ] [ inventory ]
+    py:set "mywho" mywho
+    py:set "size" trade_size
+    py:set "bestdealer" [ who ] of bestdealer
+    ;py:run("print('dealer {} sells {} to {}'.format(mywho, size, bestdealer))")
     ;set trade_size min list ( trade_size ) ( -1 * [ inventory ] of bestdealer ) ; dealers will only trade to make themselves flatter
     transact "sell" trade_size [ who ] of bestdealer false
   ]
 end
 
 
-to smartinvestor-act ; smart-investor procedure
+to trendinvestor-act ; smart-investor procedure
 
   py:set "id" who
 
@@ -276,13 +298,11 @@ to transact [ direction tradesize counterpartyID record ] ; turtle procedure
 
   set tradesize abs ( tradesize )
   let factor 1 ;initialise
-  let counterparty 0 ; initialise
+  let counterparty one-of dealers with [ who = counterpartyID ]
   ifelse direction = "buy" [
     set factor 1
-    set counterparty one-of dealers with [ inventory = max [ inventory ] of dealers ]
   ][
     set factor -1
-    set counterparty one-of dealers with [ inventory = min [ inventory ] of dealers ]
   ]
 
   let bestpx 0 ; initialise
@@ -296,16 +316,16 @@ to transact [ direction tradesize counterpartyID record ] ; turtle procedure
   let final-px 100 ; initialise
   let final-size 0 ; initialise
   ifelse ( breed = valueinvestors ) [
-    set final-px bestpx - a * ( [ inventory + expectation / 5 ] of one-of dealers with [ who = counterpartyID ] ) * 1. / ( 1 +  a / 5 )
+    set final-px ( bestpx - a * ( [ expectation / 5 ] of one-of dealers with [ who = counterpartyID ] ) ) * 1. / ( 1 +  a / 5 )
     set final-size abs ( 0.2 * ( expectation - final-px ) )
   ][
-    set final-px bestpx - a * [ inventory + ( factor * tradesize ) ] of one-of dealers with [ who = counterpartyID ]
+    set final-px bestpx - a * [ ( factor * tradesize ) ] of one-of dealers with [ who = counterpartyID ]
     set final-size abs ( tradesize )
 ]
   ;let final-px bestpx - sensitivity-function ( [ inventory - factor * tradesize ] of counterparty - tradesize )
   ;let final-size tradesize
 
-  if ( breed = smartinvestors ) [ ; NB: this would be nicer inside smartinvestor-act procedure, but it requires knowing size-adj-px so this is not an option.
+  if ( breed = trendinvestors ) [ ; NB: this would be nicer inside trendinvestor-act procedure, but it requires knowing size-adj-px so this is not an option.
     ifelse length trade-holding-times > 0 and min trade-holding-times <= ticks [ ; if it was an old trade being closed, remove the trade stats from the traders memory
       set ctransaction-price final-px
       ][ ; else create a new part in the memory
@@ -320,6 +340,11 @@ to transact [ direction tradesize counterpartyID record ] ; turtle procedure
   ask dealers with [ in-link-neighbor? counterparty ] [
     set last-trade final-px
   ]
+
+  if ( breed = dealers ) [
+    set last-trade final-px
+  ]
+
   ask counterparty [
     set last-trade final-px
     set inventory inventory - factor * final-size
@@ -338,14 +363,15 @@ to transact [ direction tradesize counterpartyID record ] ; turtle procedure
 end
 
 
-to initialise-smartinvestors ; global procedure
+to initialise-trendinvestors ; global procedure
   let counter 0
-  create-ordered-smartinvestors n-smart-investors [
+  let colorstep round ( 100 / n-trend-investors )
+  create-ordered-trendinvestors n-trend-investors [
     set shape "person"
     set size 2
     fd 16
     rt 180
-    set color red
+    set color ( 5 + colorstep * ( who - min [ who ] of trendinvestors ) )
     create-links-with dealers [ set weight random 100 ]
     set inventory 0
     set state-memory []
@@ -399,12 +425,13 @@ to initialise-dealers ; global procedure
     create-links-with other dealers [ set weight random 100 ]
     set inventory 0
     set last-trade 100 ; initialise at the starting price
+    set mid-history []
   ]
 end
 
 
 to plot-normal [ histogram-bins ] ; global procedure
-  if not any? smartinvestors with [ not confident? ] [
+  if not any? trendinvestors with [ not confident? ] [
     let meanPlot mean returns
     let varPlot variance returns
     let areascaler length returns * ( plot-x-max - plot-x-min ) / histogram-bins
@@ -441,7 +468,7 @@ end
 
 to move-market ; global procedure
   ask valueinvestors [
-    set expectation expectation * 0.8 ; force a market crash by reducing the value investor expectation
+    set expectation expectation * 0.5 ; force a market crash by reducing the value investor expectation
   ]
 end
 
@@ -462,7 +489,9 @@ to-report normal [x mu var]
 end
 
 to-report price-level
-  report mean [ expectation ] of dealers
+  let best_bid max ( [ expectation ] of dealers ) - bid-offer
+  let best_offer min ( [ expectation ] of dealers ) + bid-offer
+  report ( best_bid + best_offer ) / 2
 end
 
 to-report best-bid
@@ -504,13 +533,13 @@ to-report sensitivity-function [ x ]
   report a * x  ; linear
 end
 
-to-report smartinvestor-rewards
-  let meanreward ( py:runresult "sum([agents[id].totalreward for id in agents.keys()])" ) / n-smart-investors
+to-report trendinvestor-rewards
+  let meanreward ( py:runresult "sum([agents[id].totalreward for id in agents.keys()])" ) / n-trend-investors
   report meanreward
 end
 
-to-report smartinvestor-epsilon
-  let epsilon py:runresult "sum([agents[id].epsilon for id in agents.keys()])" / n-smart-investors
+to-report trendinvestor-epsilon
+  let epsilon py:runresult "sum([agents[id].epsilon for id in agents.keys()])" / n-trend-investors
   report epsilon
 end
 
@@ -526,12 +555,38 @@ to update-price-plot; plot procedure
   let ymin min last2000
   set-plot-y-range ( precision ymin 2 ) ( precision ymax 2 )
   ]
+  ask dealers [
+    py:set "id" who
+    set-current-plot-pen py:runresult "'dealer {}'.format(id)"
+    set-plot-pen-color 7
+    plotxy ticks expectation
+  ]
+
+  ; plot the best bid and best offer in the market over the top of the grey pens
+  let bestbid [ bid ] of max-one-of dealers [ bid ]
+  let bestoffer [ offer ] of min-one-of dealers [ offer ]
+  set-current-plot-pen "market bid"
+  set-plot-pen-color blue
+  plot bestbid ; plot best bid
+  set-current-plot-pen "market offer"
+  set-plot-pen-color red
+  plot bestoffer ; plot best offer
 end
 
 to update-histogram; plot procedure
   clear-plot
-  set-plot-x-range ( -1 * bid-offer * 20 ) ( bid-offer * 20 )
-  set histogram-num-bars 2 * ( plot-x-max - plot-x-min ) / bid-offer
+  set-plot-x-range ( -0.3 ) ( 0.3 )
+  set histogram-num-bars 100 * ( plot-x-max - plot-x-min ) / bid-offer
+end
+
+to plot-profits; plot procedure
+  ask trendinvestors [
+    py:set "id" who
+    set-current-plot-pen py:runresult "'trend investor {}'.format(id)"
+    let rewardhist py:runresult "agents[id].totalreward"
+    set-plot-pen-color color
+    plotxy ticks rewardhist
+  ]
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
@@ -570,7 +625,7 @@ n-value-investors
 n-value-investors
 0
 40
-20.0
+10.0
 1
 1
 NIL
@@ -663,10 +718,8 @@ price
 10.0
 true
 true
-"set-plot-y-range 99 101\nset-plot-x-range 0 100" "update-price-plot"
+"set-plot-y-range 99 101\nset-plot-x-range 0 100\n\nask dealers [ \npy:set \"id\" who\ncreate-temporary-plot-pen py:runresult \"'dealer {}'.format(id)\" \n]\n\ncreate-temporary-plot-pen \"market bid\"\ncreate-temporary-plot-pen \"market offer\"" "update-price-plot"
 PENS
-"market bid" 1.0 0 -13345367 true "" "let bestbid [ bid ] of max-one-of dealers [ bid ]\nlet bestoffer [ offer ] of min-one-of dealers [ offer ]\nifelse bestbid = -1e11 [ \nset-plot-pen-color white\nplot bestoffer - bid-offer\n][\nset-plot-pen-color blue\nplot bestbid\n]"
-"market offer" 1.0 0 -2674135 true "" "let bestoffer [ offer ] of min-one-of dealers [ offer ]\nlet bestbid [ bid ] of max-one-of dealers [ bid ]\nifelse bestoffer > 1e10 [\nset-plot-pen-color white \nplot bestbid + bid-offer\n][\nset-plot-pen-color red\nplot bestoffer\n]"
 
 SLIDER
 16
@@ -675,9 +728,9 @@ SLIDER
 311
 bid-offer
 bid-offer
-0
+0.5
 5
-0.4
+1.0
 0.1
 1
 NIL
@@ -692,7 +745,7 @@ dealer-position-limit
 dealer-position-limit
 0
 100
-50.0
+20.0
 1
 1
 NIL
@@ -726,7 +779,7 @@ n-dealers
 n-dealers
 2
 20
-10.0
+7.0
 1
 1
 NIL
@@ -786,8 +839,8 @@ SLIDER
 233
 191
 266
-n-smart-investors
-n-smart-investors
+n-trend-investors
+n-trend-investors
 0
 30
 5.0
@@ -805,7 +858,7 @@ prob-of-link
 prob-of-link
 0
 100
-100.0
+55.0
 1
 1
 NIL
@@ -820,7 +873,7 @@ market-disparity
 market-disparity
 0
 20
-10.0
+20.0
 1
 1
 NIL
@@ -925,11 +978,11 @@ Wait for the A.I. to train to see resulting price distribution chart.
 1
 
 PLOT
-773
-23
-1176
-173
-smartinvestor profit
+779
+11
+1151
+133
+trend investor profit
 NIL
 NIL
 0.0
@@ -938,9 +991,9 @@ NIL
 10.0
 true
 false
-"" ""
+"ask trendinvestors [ \npy:set \"id\" who\ncreate-temporary-plot-pen py:runresult \"'trend investor {}'.format(id)\" \n]" "plot-profits"
 PENS
-"default" 1.0 0 -16777216 true "" "plot smartinvestor-rewards"
+"default" 1.0 0 -16777216 true "" "plot trendinvestor-rewards"
 
 @#$#@#$#@
 ## WHAT IS IT?
@@ -1672,6 +1725,100 @@ NetLogo 6.2.2
     </enumeratedValueSet>
     <enumeratedValueSet variable="trade-size-cap">
       <value value="3"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="kurtosis_vs_link" repetitions="8" sequentialRunOrder="false" runMetricsEveryStep="false">
+    <setup>setup</setup>
+    <go>go</go>
+    <timeLimit steps="100000"/>
+    <metric>kurtosis</metric>
+    <enumeratedValueSet variable="dealer-position-limit">
+      <value value="20"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="n-dealers">
+      <value value="7"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="n-smart-investors">
+      <value value="5"/>
+    </enumeratedValueSet>
+    <steppedValueSet variable="prob-of-link" first="30" step="10" last="100"/>
+    <enumeratedValueSet variable="enable-broker-market?">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="n-value-investors">
+      <value value="15"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="market-disparity">
+      <value value="20"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="trade-size-cap">
+      <value value="3"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="bid-offer">
+      <value value="1"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="experiment" repetitions="9" sequentialRunOrder="false" runMetricsEveryStep="false">
+    <setup>setup</setup>
+    <go>go</go>
+    <timeLimit steps="125000"/>
+    <enumeratedValueSet variable="dealer-position-limit">
+      <value value="50"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="n-dealers">
+      <value value="7"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="n-smart-investors">
+      <value value="10"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="prob-of-link">
+      <value value="100"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="enable-broker-market?">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="n-value-investors">
+      <value value="15"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="market-disparity">
+      <value value="20"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="trade-size-cap">
+      <value value="3"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="bid-offer">
+      <value value="1.5"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="arb_op" repetitions="15" runMetricsEveryStep="true">
+    <setup>setup</setup>
+    <go>go</go>
+    <timeLimit steps="20000"/>
+    <metric>arb</metric>
+    <enumeratedValueSet variable="dealer-position-limit">
+      <value value="20"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="n-dealers">
+      <value value="7"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="n-smart-investors">
+      <value value="5"/>
+    </enumeratedValueSet>
+    <steppedValueSet variable="prob-of-link" first="5" step="5" last="100"/>
+    <enumeratedValueSet variable="enable-broker-market?">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="n-value-investors">
+      <value value="10"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="market-disparity">
+      <value value="20"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="trade-size-cap">
+      <value value="3"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="bid-offer">
+      <value value="1"/>
     </enumeratedValueSet>
   </experiment>
 </experiments>

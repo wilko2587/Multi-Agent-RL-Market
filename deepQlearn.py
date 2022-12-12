@@ -9,14 +9,6 @@ import os
 import pandas as pd
 from copy import deepcopy
 from torch.optim.lr_scheduler import MultiStepLR
-from torchsummary import summary
-
-counter = 0
-
-def NNN():
-    global counter
-    counter += 1
-    return counter
 
 np.random.seed(1)
 torch.manual_seed(1)
@@ -79,7 +71,6 @@ class FFnet(nn.Module):
         self.scheduler = MultiStepLR(self.optimizer, milestones=[300, 500, 700, 900], gamma=0.1)
 
         self.loss_curve = [] # initialise container to keep track of training loss
-        print(summary(self, (1, 512)))
         self.double()
 
     def forward(self, x):
@@ -97,19 +88,13 @@ class FFnet(nn.Module):
         x = self.fc3(x)
         return x
 
-    def fit(self, x, target, actions, epochs=1):
+    def fit(self, x, target, epochs=1):
         x = torch.tensor(x).type(torch.float)
         x = x.view(x.shape[0], -1, x.shape[1])
         target = torch.tensor(target).type(torch.float)
         for epoch in range(epochs):
             self.optimizer.zero_grad()  # zero the gradient buffers
             output = self(x)
-            mask = torch.zeros_like(output)
-            #icoords = torch.arange(start=0, end=len(actions)).type(torch.int64)
-            #jcoords = torch.tensor(actions).type(torch.int64)
-            #mask[(icoords, jcoords)] = 1
-            #output_filt = output*mask
-            #target_filt = target*mask
             loss = self.criterion(output, target)
             loss.backward()
             self.optimizer.step()  # Does the update
@@ -119,6 +104,7 @@ class FFnet(nn.Module):
 
 
 class SmartTrader:
+    counter = 0
     def __init__(self, lr, state_size, eps_decay = 0.99, batch_size=32,
                  fc2_dims=8, fc3_dims=8, confidence_epsilon_thresh=0.01,
                  gamma = 0.99):
@@ -133,12 +119,8 @@ class SmartTrader:
         self.batch_size = batch_size
         self.lr = lr
         self.counter = 0 # counter to track soft update frequency
-
-        trade_size = 3
-        #self.action_dict = {
-        #    0: ["sell", trade_size, 250], # buy/sell, size, holding time
-        #    1: ["buy", trade_size, 250],
-        #    }
+        self.id = int(SmartTrader.counter)
+        SmartTrader.counter += 1
 
         self.action_dict = {
             0: ["sell", 3, 100],  # buy/sell, size, holding time
@@ -157,9 +139,11 @@ class SmartTrader:
         self.totalrewards = [self.totalreward]
         self.confident = False # bool to turn True when epsilon is low enough
         self.confidence_epsilon_thresh = confidence_epsilon_thresh
-        self.counter = 0
         self.epsilons = []
         self.extra_counter = 0
+
+        self.states = []
+        self.actions = []
 
         # create main model
         self.model = FFnet(lr, fc2_dims, fc3_dims, self.action_size)
@@ -167,25 +151,24 @@ class SmartTrader:
 
     def remember(self, state, action, next_state, reward):
 
+        if self.confident:
+            self.states.append(pd.Series(state))
+            self.actions.append(action)
+
         self.totalreward += reward  # tracker to keep hold of rewards resulting from intentional actions
         self.totalrewards.append(self.totalrewards[-1] + reward)
         self.epsilons.append(self.epsilon)
         if len(state) == self.state_size:
             self.memory.append((state, action, next_state, reward))
 
-            if self.epsilon < self.confidence_epsilon_thresh:
-                if self.confident==False and self.extra_counter == 1:
-                    N = NNN()
-                    pd.Series(self.totalrewards).to_csv('{}.csv'.format(N))
-                    pd.Series(self.epsilons).to_csv('e{}.csv'.format(N))
+            if self.epsilon <= self.confidence_epsilon_thresh:
+                if self.confident == False and self.extra_counter == 100:
                     self.confident = True
                 self.extra_counter += 1
             if len(self.memory) > self.batch_size:
                 if self.epsilon >= self.confidence_epsilon_thresh:
                     self.epsilon *= self.epsilon_decay
                 self.learn()
-                #if len(self.model.loss_curve) > 10:
-                #    print(sum(self.model.loss_curve[-10:])/10)
 
     def act(self, state):
         state = np.array(state) #[::self.state_reduction]
@@ -253,10 +236,10 @@ class SmartTrader:
     def save_model(self, name): # unused in current implementation. Could be useful
         if name[-3:] != '.pt':
             raise NameError("Model Name needs to end in .pt. Currently: {}".format(name))
-        torch.save(self.model.state_dict(), os.path.join('./TorchModels/', name))
+        torch.save(self.model.state_dict(), os.path.join('TorchModels/', name))
 
     def load_model(self, modelname):
-        x = torch.load(os.path.join('./TorchModels/', modelname))
+        x = torch.load(os.path.join('TorchModels/', modelname))
         self.model.load_state_dict(x)
         self.model.eval()
         self.confident = True

@@ -1,13 +1,123 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="74419b36-75de-4c25-99af-34ab70d4a016" name="Changes" comment="updated transaction prices between value investors and market makers to solve the sim equations">
-      <change beforePath="$PROJECT_DIR$/.idea/.name" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.name" afterDir="false" />
+    <list default="true" id="74419b36-75de-4c25-99af-34ab70d4a016" name="Changes" comment="minor">
+      <change beforePath="$PROJECT_DIR$/.idea/other.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/other.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Financial OTC Market Multi Product.nlogo" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/Financial OTC Market.nlogo" beforeDir="false" afterPath="$PROJECT_DIR$/Financial OTC Market.nlogo" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/__pycache__/deepQlearn.cpython-39.pyc" beforeDir="false" afterPath="$PROJECT_DIR$/__pycache__/deepQlearn.cpython-39.pyc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Sine_Converge.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/DeepQtrader0.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/DeepQtrader1.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/DeepQtrader10.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/DeepQtrader11.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/DeepQtrader12.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/DeepQtrader13.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/DeepQtrader14.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/DeepQtrader15.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/DeepQtrader16.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/DeepQtrader17.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/DeepQtrader18.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/DeepQtrader19.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/DeepQtrader2.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/DeepQtrader20.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/DeepQtrader21.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/DeepQtrader22.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/DeepQtrader23.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/DeepQtrader24.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/DeepQtrader25.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/DeepQtrader26.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/DeepQtrader27.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/DeepQtrader28.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/DeepQtrader29.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/DeepQtrader3.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/DeepQtrader30.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/DeepQtrader31.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/DeepQtrader32.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/DeepQtrader33.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/DeepQtrader34.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/DeepQtrader35.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/DeepQtrader36.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/DeepQtrader37.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/DeepQtrader38.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/DeepQtrader39.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/DeepQtrader4.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/DeepQtrader40.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/DeepQtrader41.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/DeepQtrader42.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/DeepQtrader43.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/DeepQtrader44.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/DeepQtrader45.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/DeepQtrader46.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/DeepQtrader47.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/DeepQtrader48.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/DeepQtrader49.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/DeepQtrader5.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/DeepQtrader6.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/DeepQtrader7.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/DeepQtrader8.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/DeepQtrader9.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/RLtrader0.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/RLtrader1.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/RLtrader10.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/RLtrader11.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/RLtrader12.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/RLtrader13.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/RLtrader14.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/RLtrader15.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/RLtrader16.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/RLtrader17.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/RLtrader18.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/RLtrader19.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/RLtrader2.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/RLtrader20.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/RLtrader21.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/RLtrader22.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/RLtrader23.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/RLtrader24.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/RLtrader25.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/RLtrader26.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/RLtrader27.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/RLtrader28.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/RLtrader29.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/RLtrader3.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/RLtrader30.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/RLtrader31.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/RLtrader32.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/RLtrader33.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/RLtrader34.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/RLtrader35.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/RLtrader36.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/RLtrader37.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/RLtrader38.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/RLtrader39.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/RLtrader4.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/RLtrader40.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/RLtrader41.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/RLtrader42.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/RLtrader43.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/RLtrader44.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/RLtrader45.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/RLtrader46.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/RLtrader47.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/RLtrader48.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/RLtrader49.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/RLtrader5.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/RLtrader6.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/RLtrader7.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/RLtrader8.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TorchModels/RLtrader9.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/__pycache__/deepQlearn.cpython-37.pyc" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/__pycache__/deepQlearn.cpython-39.pyc" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/__pycache__/deepQlearnV2.cpython-37.pyc" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/deepQlearn.py" beforeDir="false" afterPath="$PROJECT_DIR$/deepQlearn.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/plot_curves.py" beforeDir="false" afterPath="$PROJECT_DIR$/plot_curves.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/deepQlearn_old.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/finished.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/full-scale-run-needs-more.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/full_setting_where_px_diverged.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/plot_curves.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/superrun.png" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -35,15 +145,20 @@
     <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
-    <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
+    <property name="settings.editor.selected.configurable" value="PyScientificConfigurable" />
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$" />
     </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$" />
+      <recent name="$PROJECT_DIR$/fragmentation_hist" />
+      <recent name="$PROJECT_DIR$/histories" />
+    </key>
   </component>
-  <component name="RunManager" selected="Python.plot_curves">
-    <configuration name="deepQlearn" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+  <component name="RunManager" selected="Python.plot_histogram">
+    <configuration name="arbOp" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="Multi-Agent-RL-Market" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -56,7 +171,7 @@
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/deepQlearn.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/arbOp.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -65,7 +180,45 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="plot_curves" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+    <configuration name="fragmentation_full" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="Multi-Agent-RL-Market" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/fragmentation_full.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="plot_histogram" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="Multi-Agent-RL-Market" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/plot_histogram.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="plot_kurtosis_prob" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="Multi-Agent-RL-Market" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -78,7 +231,29 @@
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/plot_curves.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/plot_kurtosis_prob.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="plot_models2" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="Multi-Agent-RL-Market" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/plot_models2.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -89,8 +264,11 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.plot_curves" />
-        <item itemvalue="Python.deepQlearn" />
+        <item itemvalue="Python.plot_histogram" />
+        <item itemvalue="Python.fragmentation_full" />
+        <item itemvalue="Python.plot_models2" />
+        <item itemvalue="Python.plot_kurtosis_prob" />
+        <item itemvalue="Python.arbOp" />
       </list>
     </recent_temporary>
   </component>
@@ -109,6 +287,20 @@
       <workItem from="1668905043098" duration="50937000" />
       <workItem from="1669064850412" duration="4441000" />
       <workItem from="1669086691316" duration="9858000" />
+      <workItem from="1669102596170" duration="1990000" />
+      <workItem from="1669179075223" duration="10000" />
+      <workItem from="1669945402489" duration="12800000" />
+      <workItem from="1670103860798" duration="3457000" />
+      <workItem from="1670111861054" duration="21179000" />
+      <workItem from="1670176906360" duration="42843000" />
+      <workItem from="1670347017137" duration="15294000" />
+      <workItem from="1670383756852" duration="6099000" />
+      <workItem from="1670394168991" duration="8930000" />
+      <workItem from="1670468699407" duration="10265000" />
+      <workItem from="1670625377856" duration="1154000" />
+      <workItem from="1670627541929" duration="1496000" />
+      <workItem from="1670640683365" duration="735000" />
+      <workItem from="1670808704649" duration="6225000" />
     </task>
     <task id="LOCAL-00001" summary="RL training and converging">
       <created>1669057915519</created>
@@ -131,7 +323,14 @@
       <option name="project" value="LOCAL" />
       <updated>1669086725734</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="minor">
+      <created>1669102607280</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1669102607280</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -153,9 +352,31 @@
     <MESSAGE value="RL training and converging" />
     <MESSAGE value="convergence time down to ~1-2mins" />
     <MESSAGE value="updated transaction prices between value investors and market makers to solve the sim equations" />
-    <option name="LAST_COMMIT_MESSAGE" value="updated transaction prices between value investors and market makers to solve the sim equations" />
+    <MESSAGE value="minor" />
+    <option name="LAST_COMMIT_MESSAGE" value="minor" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$USER_HOME$/Downloads/Multi-Agent-RL-Market-b939542c559fec280b5f09f3982a3ea976ff4e3e/results/plot_phasechange.py</url>
+          <line>54</line>
+          <option name="timeStamp" value="22" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
+    <SUITE FILE_PATH="coverage/deepQlearn_py$plot_phasechange.coverage" NAME="plot_phasechange Coverage Results" MODIFIED="1670380929717" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$USER_HOME$/Downloads/Multi-Agent-RL-Market-b939542c559fec280b5f09f3982a3ea976ff4e3e/results" />
+    <SUITE FILE_PATH="coverage/deepQlearn_py$plot_kurtosis_prob.coverage" NAME="plot_kurtosis_prob Coverage Results" MODIFIED="1670640781044" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/deepQlearn_py$plot_curves.coverage" NAME="plot_curves Coverage Results" MODIFIED="1668830010617" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/deepQlearn_py$plot_histogram.coverage" NAME="plot_histogram Coverage Results" MODIFIED="1670809777135" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/deepQlearn_py$plot_fragmented_hist.coverage" NAME="plot_fragmented_hist Coverage Results" MODIFIED="1670302936972" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/deepQlearn_py$plot_mean_reversion.coverage" NAME="plot_mean_reversion Coverage Results" MODIFIED="1670349758840" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/deepQlearn_py$plot_fragmentationMean.coverage" NAME="plot_fragmentationMean Coverage Results" MODIFIED="1670380895587" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$USER_HOME$/Downloads/Multi-Agent-RL-Market-b939542c559fec280b5f09f3982a3ea976ff4e3e/results" />
+    <SUITE FILE_PATH="coverage/deepQlearn_py$fragmentation_full.coverage" NAME="fragmentation_full Coverage Results" MODIFIED="1670389977204" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/deepQlearn_py$plot_strategies.coverage" NAME="plot_strategies Coverage Results" MODIFIED="1670178198531" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/deepQlearn_py$plot_models.coverage" NAME="plot_models Coverage Results" MODIFIED="1669959238600" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/deepQlearn_py$plot_models2.coverage" NAME="plot_models2 Coverage Results" MODIFIED="1670641025025" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>
